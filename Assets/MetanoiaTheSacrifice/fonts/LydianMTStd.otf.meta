@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: 24aedaedcac21c8448c97cab0a2fb158
+timeCreated: 1487130740
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Lydian MT Std
+  fontNames:
+  - Lydian MT Std
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

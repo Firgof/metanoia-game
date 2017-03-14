@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: a82ce08ca2be0fd4f930f2d963acc5db
+timeCreated: 1487130741
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Lynda
+  fontNames:
+  - Lynda
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

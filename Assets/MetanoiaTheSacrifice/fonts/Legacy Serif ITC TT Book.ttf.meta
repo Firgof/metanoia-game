@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: c10b5733a3cebc64588d3faa72f85eff
+timeCreated: 1487106641
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Legacy Serif ITC TT
+  fontNames:
+  - Legacy Serif ITC TT
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 852f8846a3852d8458086b271e592bed, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

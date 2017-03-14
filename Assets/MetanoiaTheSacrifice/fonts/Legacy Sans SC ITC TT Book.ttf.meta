@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: bbdd76b3ae040034193a03efef8dcc77
+timeCreated: 1487106641
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Legacy Sans SC ITC TT
+  fontNames:
+  - Legacy Sans SC ITC TT
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
