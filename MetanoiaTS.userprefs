@@ -1,0 +1,18 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\MTSInk.cs">
+    <Files>
+      <File FileName="Assets\MTSInk.cs" Line="165" Column="3" />
+      <File FileName="Assets\inkChoicePrefab.cs" Line="1" Column="1" />
+      <File FileName="Assets\MTAProgressBar.cs" Line="1" Column="1" />
+      <File FileName="Assets\Dialogue System\Scripts\Supplemental\UI\Effects\UnityUITypewriterEffect.cs" Line="1" Column="1" />
+      <File FileName="Assets\AC_FlagManagement.cs" Line="1" Column="1" />
+      <File FileName="Assets\Plugins\Ink\InkRuntime\Story.cs" Line="387" Column="9" />
+      <File FileName="Assets\Plugins\Ink\InkRuntime\StoryState.cs" Line="346" Column="5" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
