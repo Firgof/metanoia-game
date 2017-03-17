@@ -29,6 +29,7 @@ namespace AC
 		private List<QueuedMusic> queuedMusic = new List<QueuedMusic>();
 		private MusicCrossfade musicCrossfade;
 		private List<QueuedMusic> lastQueuedMusic = new List<QueuedMusic>();
+		private List<MusicSample> oldMusicSamples = new List<MusicSample>();
 		private int lastTimeSamples;
 
 		// Delay
@@ -36,6 +37,7 @@ namespace AC
 		private int delayAudioID = -1;
 		private float delayFadeTime;
 		private bool delayLoop;
+		private bool delayResumeIfPlayedBefore;
 
 
 		private void Awake ()
@@ -51,7 +53,12 @@ namespace AC
 
 			if (musicCrossfade == null)
 			{
-				ACDebug.LogWarning ("The 'Music' script requires a 'MusicCrossfade' component to be attached as a child component.");
+				ACDebug.LogWarning ("The " + gameObject.name + " requires a 'MusicCrossfade' component to be attached as a child component.\r\nOne has been added automatically, but you should update the source prefab.", gameObject);
+				GameObject crossfadeOb = new GameObject ("Crossfader");
+				crossfadeOb.AddComponent <AudioSource>();
+				musicCrossfade = crossfadeOb.AddComponent <MusicCrossfade>();
+				crossfadeOb.transform.position = transform.position;
+				crossfadeOb.transform.parent = transform;
 			}
 		}
 
@@ -91,14 +98,17 @@ namespace AC
 			{
 				if (!audioSource.isPlaying)
 				{
+					ClearMusicSample (queuedMusic[0].trackID);
 					queuedMusic.RemoveAt (0);
 					if (queuedMusic.Count > 0)
 					{
 						MusicStorage musicStorage = GetMusic (queuedMusic[0].trackID);
 						if (musicStorage != null && musicStorage.audioClip != null)
 						{
+							int nextTimeSamples = (queuedMusic[0].doResume) ? GetMusicSample (queuedMusic[0].trackID) : 0;
+
 							SetRelativeVolume (musicStorage.relativeVolume);
-							Play (musicStorage.audioClip, queuedMusic[0].trackLoop);
+							Play (musicStorage.audioClip, queuedMusic[0].trackLoop, nextTimeSamples);
 						}
 					}
 				}
@@ -107,6 +117,8 @@ namespace AC
 					QueuedMusic nextMusic = queuedMusic[1];
 					if (nextMusic.fadeTime > 0f)
 					{
+						int nextTimeSamples = (nextMusic.doResume) ? GetMusicSample (nextMusic.trackID) : 0;
+
 						// Need to pre-empt next track
 						float thresholdProportion = (audioSource.clip.length - nextMusic.fadeTime) / audioSource.clip.length;
 						int thresholdSamples = (int) (thresholdProportion * (float) audioSource.clip.samples);
@@ -114,6 +126,7 @@ namespace AC
 						if (audioSource.timeSamples > thresholdSamples)
 						{
 							MusicStorage musicStorage = GetMusic (nextMusic.trackID);
+							ClearMusicSample (queuedMusic[0].trackID);
 							queuedMusic.RemoveAt (0);
 
 							if (nextMusic.isCrossfade)
@@ -124,11 +137,11 @@ namespace AC
 								}
 								audioSource.clip = musicStorage.audioClip;
 								SetRelativeVolume (musicStorage.relativeVolume);
-								FadeIn (nextMusic.fadeTime, nextMusic.trackLoop);
+								FadeIn (nextMusic.fadeTime, nextMusic.trackLoop, nextTimeSamples);
 							}
 							else
 							{
-								FadeOutThenIn (musicStorage, nextMusic.fadeTime, nextMusic.trackLoop);
+								FadeOutThenIn (musicStorage, nextMusic.fadeTime, nextMusic.trackLoop, nextMusic.doResume);
 							}
 						}
 					}
@@ -145,10 +158,11 @@ namespace AC
 		 * <param name = "loop">If True, the new music track will be looped</param>
 		 * <param name = "isQueued">If True, the music track will be queued until the current track has finished playing</param>
 		 * <param name = "fadeTime">The fade-in duration, in seconds</param>
+		 * <param name = "resumeIfPlayedBefore">If True, and the track has been both played before and stopped before it finished, the track will be resumed</param>
 		 */
-		public float Play (int trackID, bool loop, bool isQueued, float fadeTime)
+		public float Play (int trackID, bool loop, bool isQueued, float fadeTime, bool resumeIfPlayedBefore = false)
 		{
-			return HandlePlay (trackID, loop, isQueued, fadeTime, false);
+			return HandlePlay (trackID, loop, isQueued, fadeTime, false, resumeIfPlayedBefore);
 		}
 
 
@@ -158,20 +172,24 @@ namespace AC
 		 * <param name = "loop">If True, the new music track will be looped</param>
 		 * <param name = "isQueued">If True, the music track will be queued until the current track has finished playing</param>
 		 * <param name = "fadeTime">The crossfade duration, in seconds</param>
+		 * <param name = "resumeIfPlayedBefore">If True, and the track has been both played before and stopped before it finished, the track will be resumed</param>
 		 */
-		public float Crossfade (int trackID, bool loop, bool isQueued, float fadeTime)
+		public float Crossfade (int trackID, bool loop, bool isQueued, float fadeTime, bool resumeIfPlayedBefore = false)
 		{
-			return HandlePlay (trackID, loop, isQueued, fadeTime, true);
+			return HandlePlay (trackID, loop, isQueued, fadeTime, true, resumeIfPlayedBefore);
 		}
 
 
 		/**
 		 * <summary>Resumes the last-played music queue</summary>
+		 * <param name = "fadeTime">The fade-in time in seconds, if greater than zero</param>
+		 * <param name = "playFromStart">If True, the music track will play from the beginning</param>
 		 */
 		public float ResumeLastQueue (float fadeTime, bool playFromStart)
 		{
 			if (lastQueuedMusic.Count == 0)
 			{
+				ACDebug.Log ("Can't resume music - nothing in the queue!");
 				return 0f;
 			}
 
@@ -193,7 +211,7 @@ namespace AC
 		}
 
 
-		private float HandlePlay (int trackID, bool loop, bool isQueued, float fadeTime, bool isCrossfade)
+		private float HandlePlay (int trackID, bool loop, bool isQueued, float fadeTime, bool isCrossfade, bool resumeIfPlayedBefore)
 		{
 			if (musicCrossfade)
 			{
@@ -209,7 +227,7 @@ namespace AC
 
 			if (isQueued && queuedMusic.Count > 0)
 			{
-				queuedMusic.Add (new QueuedMusic (trackID, loop, fadeTime, isCrossfade));
+				queuedMusic.Add (new QueuedMusic (trackID, loop, fadeTime, isCrossfade, resumeIfPlayedBefore));
 				return 0f;
 			}
 			else
@@ -234,10 +252,16 @@ namespace AC
 				}
 				
 				bool musicAlreadyPlaying = (queuedMusic.Count > 0) ? true : false;
+				if (musicAlreadyPlaying)
+				{
+					StoreMusicSampleByIndex (0);
+				}
+
+				int newTrackTimeSamples = (resumeIfPlayedBefore) ? GetMusicSample (trackID) : 0;
 				
 				queuedMusic.Clear ();
 				queuedMusic.Add (new QueuedMusic (trackID, loop));
-				
+
 				if (musicAlreadyPlaying)
 				{
 					if (fadeTime > 0f)
@@ -249,12 +273,12 @@ namespace AC
 								musicCrossfade.FadeOut (audioSource, fadeTime);
 							}
 							audioSource.clip = musicStorage.audioClip;
-							FadeIn (fadeTime, loop);
+							FadeIn (fadeTime, loop, newTrackTimeSamples);
 							return fadeTime;
 						}
 						else
 						{
-							FadeOutThenIn (musicStorage, fadeTime, loop);
+							FadeOutThenIn (musicStorage, fadeTime, loop, resumeIfPlayedBefore);
 							return (fadeTime * 2f);
 						}
 					}
@@ -262,7 +286,7 @@ namespace AC
 					{
 						Stop ();
 						SetRelativeVolume (musicStorage.relativeVolume);
-						Play (musicStorage.audioClip, loop);
+						Play (musicStorage.audioClip, loop, newTrackTimeSamples);
 						return 0f;
 					}
 				}
@@ -273,12 +297,12 @@ namespace AC
 					if (fadeTime > 0f)
 					{
 						audioSource.clip = musicStorage.audioClip;
-						FadeIn (fadeTime, loop);
+						FadeIn (fadeTime, loop, newTrackTimeSamples);
 						return fadeTime;
 					}
 					else
 					{
-						Play (musicStorage.audioClip, loop);
+						Play (musicStorage.audioClip, loop, newTrackTimeSamples);
 						return 0f;
 					}
 				}
@@ -289,11 +313,16 @@ namespace AC
 		/**
 		 * <summary>Stops the currently-playing music track, and cancels all those in the queue.</summary>
 		 */
-		public float StopAll (float fadeTime)
+		public float StopAll (float fadeTime, bool storeCurrentIndex = true)
 		{
 			if (fadeTime == 0f && musicCrossfade)
 			{
 				musicCrossfade.Stop ();
+			}
+
+			if (storeCurrentIndex)
+			{
+				StoreMusicSampleByIndex (0);
 			}
 
 			delayAudioID = -1;
@@ -334,7 +363,7 @@ namespace AC
 		}
 
 
-		private void FadeOutThenIn (MusicStorage musicStorage, float fadeTime, bool loop)
+		private void FadeOutThenIn (MusicStorage musicStorage, float fadeTime, bool loop, bool resumeIfPlayedBefore)
 		{
 			FadeOut (fadeTime);
 
@@ -342,6 +371,7 @@ namespace AC
 			delayAudioID = musicStorage.ID;
 			delayFadeTime = fadeTime;
 			delayLoop = loop;
+			delayResumeIfPlayedBefore = resumeIfPlayedBefore;
 		}
 
 
@@ -354,9 +384,11 @@ namespace AC
 				MusicStorage musicStorage = GetMusic (delayAudioID);
 				if (musicStorage != null)
 				{
+					int timeSamples = (delayResumeIfPlayedBefore) ? GetMusicSample (delayAudioID) : 0;
+
 					audioSource.clip = musicStorage.audioClip;
 					SetRelativeVolume (musicStorage.relativeVolume);
-					FadeIn (delayFadeTime, delayLoop);
+					FadeIn (delayFadeTime, delayLoop, timeSamples);
 				}
 			}
 
@@ -426,8 +458,8 @@ namespace AC
 					musicString.Append (SaveSystem.pipe);
 				}
 			}
-
 			mainData.musicQueueData = musicString.ToString ();
+
 			mainData.musicTimeSamples = 0;
 			mainData.lastMusicTimeSamples = lastTimeSamples;
 
@@ -439,6 +471,21 @@ namespace AC
 					mainData.musicTimeSamples = audioSource.timeSamples;
 				}
 			}
+
+			StringBuilder oldTimeSamplesString = new StringBuilder ();
+			for (int i=0; i<oldMusicSamples.Count; i++)
+			{
+				oldTimeSamplesString.Append (oldMusicSamples[i].trackID.ToString ());
+				oldTimeSamplesString.Append (SaveSystem.colon);
+				oldTimeSamplesString.Append (oldMusicSamples[i].timeSample.ToString ());
+
+				if (i < (oldMusicSamples.Count-1))
+				{
+					oldTimeSamplesString.Append (SaveSystem.pipe);
+				}
+			}
+			mainData.oldMusicTimeSamples = oldTimeSamplesString.ToString ();
+
 			return mainData;
 		}
 		
@@ -449,9 +496,30 @@ namespace AC
 		 */
 		public void LoadMainData (MainData mainData)
 		{
-			StopAll (0f);
+			StopAll (0f, false);
+
+			if (mainData.oldMusicTimeSamples != null && mainData.oldMusicTimeSamples.Length > 0)
+			{
+				oldMusicSamples.Clear ();
+				string[] oldArray = mainData.oldMusicTimeSamples.Split (SaveSystem.pipe[0]);
+				foreach (string chunk in oldArray)
+				{
+					string[] chunkData = chunk.Split (SaveSystem.colon[0]);
+
+					// ID
+					int _id = 0;
+					int.TryParse (chunkData[0], out _id);
+
+					// TimeSample
+					int _timeSamples = 0;
+					int.TryParse (chunkData[1], out _timeSamples);
+
+					oldMusicSamples.Add (new MusicSample (_id, _timeSamples));
+				}
+			}
 
 			lastTimeSamples = mainData.lastMusicTimeSamples;
+
 			if (mainData.lastMusicQueueData != null && mainData.lastMusicQueueData.Length > 0)
 			{
 				lastQueuedMusic.Clear ();
@@ -534,41 +602,109 @@ namespace AC
 			SetMaxVolume ();
 		}
 
-	}
 
-
-	public struct QueuedMusic
-	{
-
-		public int trackID;
-		public bool trackLoop;
-		public float fadeTime;
-		public bool isCrossfade;
-
-
-		public QueuedMusic (int _trackID, bool _trackLoop, float _fadeTime = 0f, bool _isCrossfade = false)
+		private void StoreMusicSampleByIndex (int index)
 		{
-			trackID = _trackID;
-			trackLoop = _trackLoop;
-			fadeTime = _fadeTime;
-
-			if (fadeTime > 0f)
+			if (queuedMusic != null && queuedMusic.Count > index)
 			{
-				isCrossfade = _isCrossfade;
+				int trackID = queuedMusic[index].trackID;
+				MusicStorage musicStorage = GetMusic (trackID);
+				if (musicStorage != null && musicStorage.audioClip != null && audioSource.clip == musicStorage.audioClip && audioSource.isPlaying)
+				{
+					SetMusicSample (trackID, audioSource.timeSamples);
+				}
 			}
-			else
+		}
+		
+
+		private int GetMusicSample (int trackID)
+		{
+			foreach (MusicSample musicSample in oldMusicSamples)
 			{
-				isCrossfade = false;
+				if (musicSample.trackID == trackID)
+				{
+					return musicSample.timeSample;
+				}
+			}
+			return 0;
+		}
+
+
+		private void ClearMusicSample (int trackID)
+		{
+			foreach (MusicSample musicSample in oldMusicSamples)
+			{
+				if (musicSample.trackID == trackID)
+				{
+					oldMusicSamples.Remove (musicSample);
+					return;
+				}
 			}
 		}
 
 
-		public QueuedMusic (QueuedMusic _queueMusic)
+		private void SetMusicSample (int trackID, int timeSample)
 		{
-			trackID = _queueMusic.trackID;
-			trackLoop = _queueMusic.trackLoop;
-			fadeTime = _queueMusic.fadeTime;
-			isCrossfade = _queueMusic.isCrossfade;
+			ClearMusicSample (trackID);
+
+			MusicSample newMusicSample = new MusicSample (trackID, timeSample);
+			oldMusicSamples.Add (newMusicSample);
+		}
+
+
+		private struct QueuedMusic
+		{
+
+			public int trackID;
+			public bool trackLoop;
+			public float fadeTime;
+			public bool isCrossfade;
+			public bool doResume;
+
+
+			public QueuedMusic (int _trackID, bool _trackLoop, float _fadeTime = 0f, bool _isCrossfade = false, bool _doResume = false)
+			{
+				trackID = _trackID;
+				trackLoop = _trackLoop;
+				fadeTime = _fadeTime;
+				doResume = _doResume;
+
+				if (fadeTime > 0f)
+				{
+					isCrossfade = _isCrossfade;
+				}
+				else
+				{
+					isCrossfade = false;
+				}
+			}
+
+
+			public QueuedMusic (QueuedMusic _queueMusic)
+			{
+				trackID = _queueMusic.trackID;
+				trackLoop = _queueMusic.trackLoop;
+				fadeTime = _queueMusic.fadeTime;
+				isCrossfade = _queueMusic.isCrossfade;
+				doResume = false;
+			}
+
+		}
+
+
+		private struct MusicSample
+		{
+
+			public int trackID;
+			public int timeSample;
+
+
+			public MusicSample (int _trackID, int _timeSample)
+			{
+				trackID = _trackID;
+				timeSample = _timeSample;
+			}
+
 		}
 
 	}

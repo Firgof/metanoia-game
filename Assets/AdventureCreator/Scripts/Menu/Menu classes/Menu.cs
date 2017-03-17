@@ -60,6 +60,8 @@ namespace AC
 		public AC_PositionType positionType = AC_PositionType.Centred;
 		/** An OnGUI Menu's centre point, if positionType = AC_PositionType.Manual */
 		public Vector2 manualPosition = Vector2.zero;
+		/** If True, and the position is changed during the game, a smoothing effect will be applied */
+		public bool positionSmoothing = false;
 		/** An OnGUI Menu's alignment type, if positionType = AC_PositionType.Aligned */
 		public TextAnchor alignment = TextAnchor.MiddleCenter;
 		/** The Input axis that toggle the Menu on and off, it appearType = AppearType.OnInputKey */
@@ -135,6 +137,8 @@ namespace AC
 		public bool zoomElements = false;
 		/** If True, then a new instance of the Menu will be created for each speech line, if appearType = AppearType.WhenSpeechPlays */
 		public bool oneMenuPerSpeech = false;
+		private bool isDuplicate = false;
+
 		/** The Speech instance tied to the Menu, if a duplicate was made specifically for it */
 		public Speech speech;
 
@@ -153,6 +157,10 @@ namespace AC
 		private GameState gameStateWhenTurnedOn;
 		private bool isEnabled;
 		private bool isDisabledForScreenshot = false;
+		private string idString;
+
+		private bool canDoSmoothing = false;
+
 		[SerializeField] private Vector2 biggestElementSize;
 		[SerializeField] private Rect rect = new Rect ();
 
@@ -203,6 +211,7 @@ namespace AC
 			id = 0;
 			isLocked = false;
 			updateWhenFadeOut = true;
+			positionSmoothing = false;
 
 			// Update id based on array
 			foreach (int _id in idArray)
@@ -279,6 +288,9 @@ namespace AC
 			ignoreMouseClicks = _menu.ignoreMouseClicks;
 			limitToCharacters = _menu.limitToCharacters;
 			updateWhenFadeOut = _menu.updateWhenFadeOut;
+			positionSmoothing = _menu.positionSmoothing;
+
+			idString = id.ToString ();
 
 			elements = new List<MenuElement>();
 			foreach (MenuElement _element in _menu.elements)
@@ -286,6 +298,8 @@ namespace AC
 				MenuElement newElement = _element.DuplicateSelf (fromEditor);
 				elements.Add (newElement);
 			}
+
+			canDoSmoothing = CanDoSmoothing ();
 		}
 
 
@@ -321,10 +335,7 @@ namespace AC
 					localCanvas.worldCamera = Camera.main;
 				}
 
-				if (localCanvas.renderMode != RenderMode.WorldSpace)
-				{
-					SetParent ();
-				}
+				SetParent ();
 
 				canvasGroup = canvas.GetComponent <CanvasGroup>();
 			}
@@ -381,7 +392,7 @@ namespace AC
 			if (GetsDuplicated ()) return;
 
 			GameObject uiOb = GameObject.Find ("_UI");
-			if (uiOb != null && canvas != null)
+			if (uiOb != null && canvas != null && canvas.renderMode != RenderMode.WorldSpace)
 			{
 				uiOb.transform.position = Vector3.zero;
 				canvas.transform.SetParent (uiOb.transform);
@@ -404,6 +415,13 @@ namespace AC
 			//	return true;
 			}
 			return false;
+		}
+
+
+		public void DuplicateInGame (Menu otherMenu)
+		{
+			isDuplicate = true;
+			Copy (otherMenu, false);
 		}
 
 
@@ -463,10 +481,17 @@ namespace AC
 		 */
 		public void EnableUI ()
 		{
+			if (GetsDuplicated () && !isDuplicate) return;
+
 			if (canvas != null && menuSource != MenuSource.AdventureCreator)
 			{
 				canvas.gameObject.SetActive (true);
 				canvas.enabled = true;
+
+				if (isDuplicate && uiTransitionType == UITransition.CanvasGroupFade && canvasGroup != null && fadeSpeed > 0f)
+				{
+					canvasGroup.alpha = 0f;
+				}
 
 				if (CanCurrentlyKeyboardControl () && IsClickable ())
 				{
@@ -556,8 +581,8 @@ namespace AC
 			}
 			else if (appearType == AppearType.WhenSpeechPlays)
 			{
-				speechMenuType = (SpeechMenuType) EditorGUILayout.EnumPopup ("For speakers of type:", speechMenuType);
-				speechMenuLimit = (SpeechMenuLimit) EditorGUILayout.EnumPopup ("For speech of type:", speechMenuLimit);
+				speechMenuType = (SpeechMenuType) CustomGUILayout.EnumPopup ("For speakers of type:", speechMenuType, apiPrefix + ".speechMenuType");
+				speechMenuLimit = (SpeechMenuLimit) CustomGUILayout.EnumPopup ("For speech of type:", speechMenuLimit, apiPrefix + ".speechMenuLimit");
 				oneMenuPerSpeech = CustomGUILayout.Toggle ("Duplicate for each line?", oneMenuPerSpeech, apiPrefix + ".oneMenuPerSpeech");
 
 				if (speechMenuType == SpeechMenuType.SpecificCharactersOnly)
@@ -612,10 +637,10 @@ namespace AC
 					manualPosition.y = EditorGUILayout.Slider (manualPosition.y, 0f, 100f);
 					EditorGUILayout.EndHorizontal ();
 
-					fitWithinScreen = EditorGUILayout.Toggle ("Always fit within screen?", fitWithinScreen);
+					fitWithinScreen = CustomGUILayout.Toggle ("Always fit within screen?", fitWithinScreen, apiPrefix + ".fitWithinScreen");
 				}
 				
-				sizeType = (AC_SizeType) EditorGUILayout.EnumPopup ("Size:", sizeType);
+				sizeType = (AC_SizeType) CustomGUILayout.EnumPopup ("Size:", sizeType, apiPrefix + ".sizeType");
 				if (sizeType == AC_SizeType.Manual)
 				{
 					EditorGUILayout.BeginHorizontal ();
@@ -641,6 +666,11 @@ namespace AC
 					{
 						EditorGUILayout.HelpBox ("This process is fairly CPU-intensive, so only use it if your are having display issues without it.", MessageType.Info);
 					}
+				}
+
+				if (CanDoSmoothing (true))
+				{
+					positionSmoothing = CustomGUILayout.Toggle ("Smooth movement?", positionSmoothing, apiPrefix + ".positionSmoothing");
 				}
 				
 				EditorGUILayout.BeginHorizontal ();
@@ -669,7 +699,7 @@ namespace AC
 
 					if (fadeSpeed > 0f)
 					{
-						updateWhenFadeOut = EditorGUILayout.Toggle ("Update while fading out?", updateWhenFadeOut);
+						updateWhenFadeOut = CustomGUILayout.Toggle ("Update while fading out?", updateWhenFadeOut, apiPrefix + ".updateWhenFadeOut");
 					}
 				}
 			}
@@ -677,6 +707,12 @@ namespace AC
 			{
 				uiPositionType = (UIPositionType) CustomGUILayout.EnumPopup ("Position type:", uiPositionType, apiPrefix + ".uiPositionType");
 				fitWithinScreen = CustomGUILayout.Toggle ("Always fit within screen?", fitWithinScreen, apiPrefix + ".fitWithinScreen");
+
+				if (CanDoSmoothing (true))
+				{
+					positionSmoothing = CustomGUILayout.Toggle ("Smooth movement?", positionSmoothing, apiPrefix + ".positionSmoothing");
+				}
+
 				uiTransitionType = (UITransition) CustomGUILayout.EnumPopup ("Transition type:", uiTransitionType, apiPrefix + ".uiTransitionType");
 				if (uiTransitionType != UITransition.None)
 				{
@@ -696,7 +732,7 @@ namespace AC
 
 					if (uiTransitionType != UITransition.None && fadeSpeed > 0f)
 					{
-						updateWhenFadeOut = EditorGUILayout.Toggle ("Update while fading out?", updateWhenFadeOut);
+						updateWhenFadeOut = CustomGUILayout.Toggle ("Update while fading out?", updateWhenFadeOut, apiPrefix + ".updateWhenFadeOut");
 					}
 				}
 
@@ -706,7 +742,7 @@ namespace AC
 					isInScene = true;
 				}
 
-				canvas = (Canvas) EditorGUILayout.ObjectField ("Linked Canvas:", canvas, typeof (Canvas), isInScene);
+				canvas = (Canvas) CustomGUILayout.ObjectField <Canvas> ("Linked Canvas:", canvas, isInScene, apiPrefix + ".canvas");
 				if (isInScene)
 				{
 					canvasID = Menu.FieldToID <Canvas> (canvas, canvasID);
@@ -874,7 +910,7 @@ namespace AC
 				return;
 			}
 
-			SetCentre(new Vector2(_position.x, _position.y), false);
+			SetCentre (new Vector2(_position.x, _position.y), false);
 		}
 		
 
@@ -885,48 +921,113 @@ namespace AC
 		 */
 		public void SetCentre (Vector2 _position, bool useAspectRatio = false)
 		{
+			if (useAspectRatio && !KickStarter.settingsManager.forceAspectRatio)
+			{
+				useAspectRatio = false;
+			}
+
 			if (IsUnityUI ())
 			{
 				if (canvas != null && rectTransform != null)
 				{
 					if (canvas.renderMode != RenderMode.WorldSpace)
 					{
-						float minLeft = rectTransform.sizeDelta.x * (1f - rectTransform.pivot.x) * canvas.scaleFactor * rectTransform.localScale.x;
-						float minTop = rectTransform.sizeDelta.y * (1f - rectTransform.pivot.y) * canvas.scaleFactor * rectTransform.localScale.y;
-
-						float maxLeft = rectTransform.sizeDelta.x * rectTransform.pivot.x * canvas.scaleFactor * rectTransform.localScale.x;
-						float maxTop = rectTransform.sizeDelta.y * rectTransform.pivot.y * canvas.scaleFactor * rectTransform.localScale.y;
+						if (useAspectRatio)
+						{
+							_position = KickStarter.mainCamera.CorrectScreenPositionForUnityUI (_position);
+						}
 
 						if (fitWithinScreen)
 						{
+							float minLeft = rectTransform.sizeDelta.x * (1f - rectTransform.pivot.x) * canvas.scaleFactor * rectTransform.localScale.x;
+							float minTop = rectTransform.sizeDelta.y * (1f - rectTransform.pivot.y) * canvas.scaleFactor * rectTransform.localScale.y;
+							
+							float maxLeft = rectTransform.sizeDelta.x * rectTransform.pivot.x * canvas.scaleFactor * rectTransform.localScale.x;
+							float maxTop = rectTransform.sizeDelta.y * rectTransform.pivot.y * canvas.scaleFactor * rectTransform.localScale.y;
+
+							if (KickStarter.settingsManager.forceAspectRatio)
+							{
+								Vector2 windowViewportDifference = KickStarter.mainCamera.GetWindowViewportDifference ();
+
+								minLeft += windowViewportDifference.x;
+								maxLeft += windowViewportDifference.x;
+
+								minTop += windowViewportDifference.y;
+								maxTop += windowViewportDifference.y;
+							}
+
 							_position.x = Mathf.Clamp (_position.x, maxLeft, Screen.width - minLeft);
 							_position.y = Mathf.Clamp (_position.y, maxTop, Screen.height - minTop);
 						}
 					}
 
-					rectTransform.transform.position = new Vector3 (_position.x, _position.y, rectTransform.transform.position.z);
+					Vector3 targetPositionUI = new Vector3 (_position.x, _position.y, rectTransform.transform.position.z);
+					if (canDoSmoothing && !IsFading ())
+					{
+						targetPositionUI = Vector3.Lerp (rectTransform.transform.position, targetPositionUI, Time.deltaTime * 12f);
+					}
+					rectTransform.transform.position = targetPositionUI;
 				}
-
 				return;
 			}
 
+			Vector2 targetPosition = Vector2.zero;
 			if (useAspectRatio)
 			{
-				Vector2 screenSize = AdvGame.GetMainGameViewSize(true);
-				Vector2 screenOffset = AdvGame.GetMainGameViewOffset();
-				Vector2 centre = new Vector2((_position.x * screenSize.x) + screenOffset.x, (_position.y * screenSize.y) + screenOffset.y);
+				Vector2 screenSize = AdvGame.GetMainGameViewSize (true);
+				Vector2 screenOffset = AdvGame.GetMainGameViewOffset ();
+				Vector2 centre = new Vector2 ((_position.x * screenSize.x) + screenOffset.x, (_position.y * screenSize.y) + screenOffset.y);
+				targetPosition = new Vector2 (centre.x - (rect.width / 2), centre.y - (rect.height / 2));
+
 				rect.x = centre.x - (rect.width / 2);
 				rect.y = centre.y - (rect.height / 2);
 			}
 			else
 			{
-				Vector2 screenSize = AdvGame.GetMainGameViewSize(false);
-				Vector2 centre = new Vector2(_position.x * screenSize.x, _position.y * screenSize.y);
+				Vector2 screenSize = AdvGame.GetMainGameViewSize (false);
+				Vector2 centre = new Vector2 (_position.x * screenSize.x, _position.y * screenSize.y);
+				targetPosition = new Vector2 (centre.x - (rect.width / 2), centre.y - (rect.height / 2));
+
 				rect.x = centre.x - (rect.width / 2);
 				rect.y = centre.y - (rect.height / 2);
 			}
 
+			rect.x = targetPosition.x;
+			rect.y = targetPosition.y;
+
 			FitMenuInsideScreen ();
+		}
+
+
+		private bool CanDoSmoothing (bool forGUI = false)
+		{
+			if (!pauseWhenEnabled &&
+					(forGUI ||
+			   		(positionSmoothing && Application.isPlaying)))
+			{
+				/*if (menuSource == MenuSource.AdventureCreator)
+				{
+					if (positionType == AC_PositionType.AbovePlayer ||
+						positionType == AC_PositionType.AboveSpeakingCharacter ||
+						positionType == AC_PositionType.FollowCursor ||
+						positionType == AC_PositionType.OnHotspot)
+					{
+						return true;
+					}
+				}
+				else*/
+				if (menuSource == MenuSource.UnityUiPrefab)
+				{
+					if (uiPositionType == UIPositionType.AbovePlayer ||
+						uiPositionType == UIPositionType.AboveSpeakingCharacter ||
+						//uiPositionType == UIPositionType.OnHotspot ||
+						uiPositionType == UIPositionType.FollowCursor)
+					{
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 		
 		
@@ -1215,7 +1316,7 @@ namespace AC
 			}
 			else if (positionType == AC_PositionType.Manual || !Application.isPlaying)
 			{
-				SetCentre (new Vector2(manualPosition.x / 100f, manualPosition.y / 100f), true);
+				SetCentre (new Vector2 (manualPosition.x / 100f, manualPosition.y / 100f), true);
 			}
 		}
 		
@@ -1488,7 +1589,6 @@ namespace AC
 			{
 				doFade = false;
 			}
-			//KickStarter.eventManager.Call_OnMenuTurnOn (this, !doFade);
 
 			// Setting selected_slot to -2 will cause PlayerInput's selected_option to reset
 			if (isLocked)
@@ -1859,7 +1959,7 @@ namespace AC
 		 */
 		public bool CanPause ()
 		{
-			if (appearType == AppearType.Manual || appearType == AppearType.OnInputKey || appearType == AC.AppearType.OnInteraction || appearType == AppearType.OnContainer)
+			if (appearType == AppearType.Manual || appearType == AppearType.OnInputKey || appearType == AC.AppearType.OnInteraction || appearType == AppearType.OnContainer || appearType == AppearType.MouseOver)
 			{
 				return true;
 			}
@@ -2364,6 +2464,18 @@ namespace AC
 				{
 					canvas.gameObject.SetActive (true);
 				}
+			}
+		}
+
+
+		/**
+		 * The Menu's id number as a string.
+		 */
+		public string IDString
+		{
+			get
+			{
+				return idString;
 			}
 		}
 

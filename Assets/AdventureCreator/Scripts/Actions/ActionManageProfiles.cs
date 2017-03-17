@@ -81,65 +81,97 @@ namespace AC
 			{
 				KickStarter.options.CreateProfile (newProfileLabel);
 			}
-			else if (manageProfileType == ManageProfileType.DeleteProfile || manageProfileType == ManageProfileType.RenameProfile)
+			else if (manageProfileType == ManageProfileType.DeleteProfile ||
+					 manageProfileType == ManageProfileType.RenameProfile ||
+					 manageProfileType == ManageProfileType.SwitchActiveProfile)
 			{
 				if (deleteProfileType == DeleteProfileType.ActiveProfile)
 				{
 					if (manageProfileType == ManageProfileType.DeleteProfile)
 					{
 						KickStarter.saveSystem.DeleteProfile ();
-						return 0f;
 					}
-					else
+					else if (manageProfileType == ManageProfileType.RenameProfile)
 					{
 						KickStarter.options.RenameProfile (newProfileLabel);
-						return 0f;
+					}
+					return 0f;
+				}
+				else if (deleteProfileType == DeleteProfileType.SetProfileID)
+				{
+					int profileID = Mathf.Max (0, profileIndex);
+
+					if (manageProfileType == ManageProfileType.DeleteProfile)
+					{
+						KickStarter.saveSystem.DeleteProfileID (profileID);
+					}
+					else if (manageProfileType == ManageProfileType.RenameProfile)
+					{
+						KickStarter.options.RenameProfileID (newProfileLabel, profileID);
+					}
+					else if (manageProfileType == ManageProfileType.SwitchActiveProfile)
+					{
+						Options.SwitchProfileID (profileID);
 					}
 				}
+				else if (deleteProfileType == DeleteProfileType.SetSlotIndex ||
+						 deleteProfileType == DeleteProfileType.SlotIndexFromVariable)
+			 	{
+					int i = Mathf.Max (0, profileIndex);
 
-				int i = Mathf.Max (0, profileIndex);
-
-				if (deleteProfileType == DeleteProfileType.SlotIndexFromVariable)
-				{
-					GVar gVar = GlobalVariables.GetVariable (slotVarID);
-					if (gVar != null)
+					if (deleteProfileType == DeleteProfileType.SlotIndexFromVariable)
 					{
-						i = gVar.val;
+						GVar gVar = GlobalVariables.GetVariable (slotVarID);
+						if (gVar != null)
+						{
+							i = gVar.val;
+						}
+						else
+						{
+							ACDebug.LogWarning ("Could not " + manageProfileType.ToString () + " - no variable found.");
+							return 0f;
+						}
+					}
+
+					bool includeActive = true;
+					if (menuName != "" && elementName != "")
+					{
+						MenuElement menuElement = PlayerMenus.GetElementWithName (menuName, elementName);
+						if (menuElement != null && menuElement is MenuProfilesList)
+						{
+							MenuProfilesList menuProfilesList = (MenuProfilesList) menuElement;
+
+							if (menuProfilesList.fixedOption)
+							{
+								ACDebug.LogWarning ("Cannot refer to ProfilesLst " + elementName + " in Menu " + menuName + ", as it lists a fixed profile ID only!");
+								return 0f;
+							}
+
+							i += menuProfilesList.GetOffset ();
+							includeActive = menuProfilesList.showActive;
+						}
+						else
+						{
+							ACDebug.LogWarning ("Cannot find ProfilesList element '" + elementName + "' in Menu '" + menuName + "'.");
+						}
 					}
 					else
 					{
-						ACDebug.LogWarning ("Could not create profile - no variable found.");
-						return 0f;
+						ACDebug.LogWarning ("No ProfilesList element referenced when trying to delete profile slot " + i.ToString ());
 					}
-				}
 
-				bool includeActive = true;
-				if (menuName != "" && elementName != "")
-				{
-					MenuElement menuElement = PlayerMenus.GetElementWithName (menuName, elementName);
-					if (menuElement != null && menuElement is MenuProfilesList)
+					if (manageProfileType == ManageProfileType.DeleteProfile)
 					{
-						MenuProfilesList menuProfilesList = (MenuProfilesList) menuElement;
-						i += menuProfilesList.GetOffset ();
-						includeActive = menuProfilesList.showActive;
+						KickStarter.saveSystem.DeleteProfile (i, includeActive);
 					}
-					else
+					else if (manageProfileType == ManageProfileType.RenameProfile)
 					{
-						ACDebug.LogWarning ("Cannot find ProfilesList element '" + elementName + "' in Menu '" + menuName + "'.");
+						KickStarter.options.RenameProfile (newProfileLabel, i, includeActive);
 					}
-				}
-				else
-				{
-					ACDebug.LogWarning ("No ProfilesList element referenced when trying to delete profile slot " + i.ToString ());
-				}
-
-				if (manageProfileType == ManageProfileType.DeleteProfile)
-				{
-					KickStarter.saveSystem.DeleteProfile (i, includeActive);
-				}
-				else
-				{
-					KickStarter.options.RenameProfile (newProfileLabel, i, includeActive);
+					else if (manageProfileType == ManageProfileType.SwitchActiveProfile)
+					{
+						KickStarter.options.SwitchProfile (i, includeActive);
+					}
 				}
 			}
 			
@@ -178,12 +210,18 @@ namespace AC
 				}
 			}
 
-			if (manageProfileType == ManageProfileType.DeleteProfile || manageProfileType == ManageProfileType.RenameProfile)
+			if (manageProfileType == ManageProfileType.DeleteProfile ||
+			    manageProfileType == ManageProfileType.RenameProfile ||
+			    manageProfileType == ManageProfileType.SwitchActiveProfile)
 			{
 				string _action = "delete";
 				if (manageProfileType == ManageProfileType.RenameProfile)
 				{
 					_action = "rename";
+				}
+				else if (manageProfileType == ManageProfileType.SwitchActiveProfile)
+				{
+					_action = "switch to";
 				}
 
 				deleteProfileType = (DeleteProfileType) EditorGUILayout.EnumPopup ("Profile to " + _action + ":", deleteProfileType);
@@ -207,8 +245,24 @@ namespace AC
 						}
 					}
 				}
+				else if (deleteProfileType == DeleteProfileType.SetProfileID)
+				{
+					profileIndexParameterID = Action.ChooseParameterGUI ("Profile ID to " + _action + ":", parameters, profileIndexParameterID, ParameterType.Integer);
+					if (profileIndexParameterID == -1)
+					{
+						profileIndex = EditorGUILayout.IntField ("Profile ID to " + _action + ":", profileIndex);
+					}
+				}
+				else if (deleteProfileType == DeleteProfileType.ActiveProfile)
+				{
+					if (manageProfileType == ManageProfileType.SwitchActiveProfile)
+					{
+						EditorGUILayout.HelpBox ("This combination of fields will no effect - please choose another.", MessageType.Info);
+					}
+				}
 
-				if (deleteProfileType != DeleteProfileType.ActiveProfile)
+				if (deleteProfileType == DeleteProfileType.SetSlotIndex || 
+						 deleteProfileType == DeleteProfileType.SlotIndexFromVariable)
 				{
 					EditorGUILayout.Space ();
 					menuName = EditorGUILayout.TextField ("Menu with ProfilesList:", menuName);

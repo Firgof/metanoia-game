@@ -26,10 +26,14 @@ namespace AC
 
 		public SaveCheck saveCheck = SaveCheck.NumberOfSaveGames;
 		public bool includeAutoSaves = true;
+		public bool checkByElementIndex = false;
 
 		public int intValue;
 		public int checkParameterID = -1;
 		public IntCondition intCondition;
+
+		public string menuName = "";
+		public string elementName = "";
 
 
 		public ActionSaveCheck ()
@@ -61,7 +65,49 @@ namespace AC
 			}
 			else if (saveCheck == SaveCheck.IsSlotEmpty)
 			{
-				return ProcessResult (!SaveSystem.DoesSaveExist (intValue), actions);
+				return ProcessResult (!SaveSystem.DoesSaveExist (intValue, intValue, !checkByElementIndex), actions);
+			}
+			else if (saveCheck == SaveCheck.DoesProfileExist)
+			{
+				if (checkByElementIndex)
+				{
+					int i = Mathf.Max (0, intValue);
+					bool includeActive = true;
+					if (menuName != "" && elementName != "")
+					{
+						MenuElement menuElement = PlayerMenus.GetElementWithName (menuName, elementName);
+						if (menuElement != null && menuElement is MenuProfilesList)
+						{
+							MenuProfilesList menuProfilesList = (MenuProfilesList) menuElement;
+
+							if (menuProfilesList.fixedOption)
+							{
+								ACDebug.LogWarning ("Cannot refer to ProfilesLst " + elementName + " in Menu " + menuName + ", as it lists a fixed profile ID only!");
+								return ProcessResult (false, actions);
+							}
+
+							i += menuProfilesList.GetOffset ();
+							includeActive = menuProfilesList.showActive;
+						}
+						else
+						{
+							ACDebug.LogWarning ("Cannot find ProfilesList element '" + elementName + "' in Menu '" + menuName + "'.");
+						}
+					}
+					else
+					{
+						ACDebug.LogWarning ("No ProfilesList element referenced when trying to delete profile slot " + i.ToString ());
+					}
+
+					bool result = KickStarter.options.DoesProfileExist (i, includeActive);
+					return ProcessResult (result, actions);
+				}
+				else
+				{
+					// intValue is the profile ID
+					bool result = Options.DoesProfileIDExist (intValue);
+					return ProcessResult (result, actions);
+				}
 			}
 			else if (saveCheck == SaveCheck.IsSavingPossible)
 			{
@@ -119,10 +165,31 @@ namespace AC
 
 			if (saveCheck == SaveCheck.IsSlotEmpty)
 			{
-				checkParameterID = Action.ChooseParameterGUI ("Save ID:", parameters, checkParameterID, ParameterType.Integer);
+				checkByElementIndex = EditorGUILayout.Toggle ("Check by SavesList slot index?", checkByElementIndex);
+
+				string intValueLabel = (checkByElementIndex) ? "SavesList slot index:" : "Save ID:";
+				checkParameterID = Action.ChooseParameterGUI (intValueLabel, parameters, checkParameterID, ParameterType.Integer);
 				if (checkParameterID < 0)
 				{
-					intValue = EditorGUILayout.IntField ("Save ID:", intValue);
+					intValue = EditorGUILayout.IntField (intValueLabel, intValue);
+				}
+			}
+			else if (saveCheck == SaveCheck.DoesProfileExist)
+			{
+				checkByElementIndex = EditorGUILayout.ToggleLeft ("Check by ProfilesList slot index?", checkByElementIndex);
+
+				string intValueLabel = (checkByElementIndex) ? "ProfilesList slot index:" : "Profile ID:";
+				checkParameterID = Action.ChooseParameterGUI (intValueLabel, parameters, checkParameterID, ParameterType.Integer);
+				if (checkParameterID < 0)
+				{
+					intValue = EditorGUILayout.IntField (intValueLabel, intValue);
+				}
+
+				if (checkByElementIndex)
+				{
+					EditorGUILayout.Space ();
+					menuName = EditorGUILayout.TextField ("Menu with ProfilesList:", menuName);
+					elementName = EditorGUILayout.TextField ("ProfilesList element:", elementName);
 				}
 			}
 			else if (saveCheck != SaveCheck.IsSavingPossible)

@@ -1,7 +1,7 @@
 /*
  *
  *	Adventure Creator
- *	by Chris Burton, 2013-2016
+ *	by Chris Burton, 2013-2017
  *	
  *	"ActionsManager.cs"
  * 
@@ -51,8 +51,10 @@ namespace AC
 		public bool invertPanning = false;
 		/** The speed factor for panning/zooming */
 		public float panSpeed = 1f;
-		/** The index number of the default Action */
+		/** The index number of the default Action (deprecated) */
 		public int defaultClass;
+		/** The class name of the default Action */
+		public string defaultClassName;
 		/** A List of all Action classes found */
 		public List<ActionType> AllActions = new List<ActionType>();
 		/** A List of all Action classes enabled */
@@ -77,12 +79,30 @@ namespace AC
 		 */
 		public string GetDefaultAction ()
 		{
-			if (EnabledActions.Count > 0 && EnabledActions.Count > defaultClass)
+			Upgrade ();
+
+			if (!string.IsNullOrEmpty (defaultClassName))
 			{
-				return EnabledActions[defaultClass].fileName;
+				return defaultClassName;
 			}
-			
+
 			return "";
+		}
+
+
+		private void Upgrade ()
+		{
+			if (defaultClass >= 0 && EnabledActions.Count > 0 && EnabledActions.Count > defaultClass)
+			{
+				defaultClassName = EnabledActions[defaultClass].fileName;
+				defaultClass = -1;
+			}
+
+			if (string.IsNullOrEmpty (defaultClassName) && EnabledActions.Count > 0)
+			{
+				defaultClassName = EnabledActions[0].fileName;
+				defaultClass = -1;
+			}
 		}
 		
 		
@@ -141,6 +161,8 @@ namespace AC
 			{
 				GUILayout.Space (10);
 
+				Upgrade ();
+
 				EditorGUILayout.BeginVertical (CustomStyles.thinBox);
 				showCategories = CustomGUILayout.ToggleHeader (showCategories, "Action categories");
 				if (showCategories)
@@ -174,7 +196,7 @@ namespace AC
 										EditorGUILayout.BeginHorizontal ();
 										if (enabledIndex >= 0)
 										{
-											if (enabledIndex == defaultClass)
+											if (!string.IsNullOrEmpty (defaultClassName) && subclass.fileName == defaultClassName)
 											{
 												EditorGUILayout.LabelField ("DEFAULT",  CustomStyles.subHeader, GUILayout.Width (140f));
 											}
@@ -184,7 +206,7 @@ namespace AC
 												{
 													if (EnabledActions.Contains (subclass))
 													{
-														defaultClass = EnabledActions.IndexOf (subclass);
+														defaultClassName = subclass.fileName;
 													}
 												}
 											}
@@ -216,7 +238,7 @@ namespace AC
 										{
 											selectedClass = subclass;
 										}
-										if (enabledIndex >= 0 && enabledIndex == defaultClass)
+										if (!string.IsNullOrEmpty (defaultClassName) && subclass.fileName == defaultClassName)
 										{
 											EditorGUILayout.LabelField ("DEFAULT",  CustomStyles.subHeader, GUILayout.Width (60f));
 										}
@@ -247,6 +269,7 @@ namespace AC
 			if (GUI.changed)
 			{
 				SetEnabled ();
+				Upgrade ();
 				EditorUtility.SetDirty (this);
 			}
 		}

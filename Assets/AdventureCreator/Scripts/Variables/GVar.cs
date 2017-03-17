@@ -134,27 +134,27 @@ namespace AC
 				
 				if (type == VariableType.Integer || type == VariableType.PopUp)
 				{
-					val = PlayMakerIntegration.GetGlobalInt (pmVar);
+					SetValue (PlayMakerIntegration.GetGlobalInt (pmVar));
 				}
 				else if (type == VariableType.Boolean)
 				{
 					bool _val = PlayMakerIntegration.GetGlobalBool (pmVar);
 					if (_val)
 					{
-						val = 1;
+						SetValue (1);
 					}
 					else
 					{
-						val = 0;
+						SetValue (0);
 					}
 				}
 				else if (type == VariableType.String)
 				{
-					textVal = PlayMakerIntegration.GetGlobalString (pmVar);
+					SetStringValue (PlayMakerIntegration.GetGlobalString (pmVar));
 				}
 				else if (type == VariableType.Float)
 				{
-					floatVal = PlayMakerIntegration.GetGlobalFloat (pmVar);
+					SetFloatValue (PlayMakerIntegration.GetGlobalFloat (pmVar));
 				}
 			}
 		}
@@ -230,7 +230,14 @@ namespace AC
 		 */
 		public void SetStringValue (string newValue)
 		{
+			string originalValue = textVal;
+
 			textVal = newValue;
+
+			if (originalValue != textVal)
+			{
+				KickStarter.eventManager.Call_OnVariableChange (this);
+			}
 		}
 		
 		
@@ -241,6 +248,8 @@ namespace AC
 		 */
 		public void SetFloatValue (float newValue, SetVarMethod setVarMethod = SetVarMethod.SetValue)
 		{
+			float originalValue = floatVal;
+
 			if (setVarMethod == SetVarMethod.IncreaseByValue)
 			{
 				floatVal += newValue;
@@ -253,6 +262,11 @@ namespace AC
 			{
 				floatVal = newValue;
 			}
+
+			if (originalValue != floatVal)
+			{
+				KickStarter.eventManager.Call_OnVariableChange (this);
+			}
 		}
 		
 
@@ -263,6 +277,8 @@ namespace AC
 		 */
 		public void SetValue (int newValue, SetVarMethod setVarMethod = SetVarMethod.SetValue)
 		{
+			int originalValue = val;
+
 			if (setVarMethod == SetVarMethod.IncreaseByValue)
 			{
 				val += newValue;
@@ -297,6 +313,11 @@ namespace AC
 				{
 					val = popUps.Length - 1;
 				}
+			}
+
+			if (originalValue != val)
+			{
+				KickStarter.eventManager.Call_OnVariableChange (this);
 			}
 		}
 

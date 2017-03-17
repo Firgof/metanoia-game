@@ -10,34 +10,51 @@ using UnityEditor;
 using System;
 using System.Collections;
 
-namespace PixelCrushers.DialogueSystem {
+namespace PixelCrushers.DialogueSystem
+{
 
-	public enum SceneType { 
-		Menu, 
-		WorldMap,
-		Region,
-		Battle
-	}
+    public enum SceneType
+    {
+        Menu,
+        WorldMap,
+        Region,
+        Battle
+    }
 
-	/// <summary>
-	/// This class adds a custom field type named "Scene" that lets you choose
-	/// from a list of scene types (Menu, WorldMap, etc.).
-	/// </summary>
-	[CustomFieldTypeService.Name("Scene Type")]
-	public class CustomFieldType_SceneType : CustomFieldType {
+    /// <summary>
+    /// This example class adds a custom field type named "Scene" that lets you choose
+    /// from a list of scene types (Menu, WorldMap, etc.).
+    /// </summary>
+    [CustomFieldTypeService.Name("Scene Type")]
+    public class CustomFieldType_SceneType : CustomFieldType
+    {
 
-		public override string Draw (string currentValue, DialogueDatabase dataBase) {
-			if (currentValue == string.Empty)
-				currentValue = SceneType.Menu.ToString();
+        public override string Draw(string currentValue, DialogueDatabase dataBase)
+        {
+            var enumValue = GetCurrentSceneType(currentValue);
+            return EditorGUILayout.EnumPopup(enumValue).ToString();
+        }
 
-			SceneType enumValue = SceneType.Menu;
-			try {
-				enumValue = (SceneType) Enum.Parse(typeof(SceneType), currentValue, true);
-			} catch (Exception) {}
+        public override string Draw(Rect rect, string currentValue, DialogueDatabase dataBase)
+        {
+            var enumValue = GetCurrentSceneType(currentValue);
+            return EditorGUI.EnumPopup(rect, enumValue).ToString();
+        }
 
-			return EditorGUILayout.EnumPopup(enumValue).ToString();
-		}
-	}
+        private SceneType GetCurrentSceneType(string currentValue)
+        {
+            if (string.IsNullOrEmpty(currentValue)) currentValue = SceneType.Menu.ToString();
+            try
+            {
+                return (SceneType)Enum.Parse(typeof(SceneType), currentValue, true);
+            }
+            catch (Exception)
+            {
+                return SceneType.Menu;
+            }
+        }
+
+    }
 }
 
 

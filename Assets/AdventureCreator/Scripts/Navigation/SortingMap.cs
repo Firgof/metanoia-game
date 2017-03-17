@@ -37,7 +37,11 @@ namespace AC
 		public bool affectSpeed = true;
 		/** The scale (as a percentage) that characters will have at the very top of the map (if affectScale = True) */
 		public int originScale = 100;
-		
+		/** How scaling values are defined (Linear, AnimationCurve) */
+		public SortingMapScaleType sortingMapScaleType = SortingMapScaleType.Linear;
+		/** The AnimationCurve used to define character scaling, where 0s is the smallest scale, and 1s is the largest (if sortingMapScaleType = AnimationCurve) */
+		public AnimationCurve scalingAnimationCurve;
+
 		private FollowSortingMap[] followers;
 		
 
@@ -145,7 +149,7 @@ namespace AC
 
 		/**
 		 * <summary>Gets an interpolated scale factor, based on a position in the scene.</summary>
-		 * <param name = "followPosition">The position in the scene to the scale factor for</param>
+		 * <param name = "followPosition">The position in the scene to get the scale factor for</param>
 		 * <returns>The interpolated scale factor for any FollowSortingMap components at the given position</returns>
 		 */
 		public float GetScale (Vector3 followPosition)
@@ -163,16 +167,36 @@ namespace AC
 			// Behind first?
 			if (Vector3.Angle (transform.forward, transform.position - followPosition) < 90f)
 			{
+				if (sortingMapScaleType == SortingMapScaleType.AnimationCurve)
+				{
+					float scaleValue = scalingAnimationCurve.Evaluate (0) * 100f;
+					return Mathf.Max (scaleValue, 1f);
+				}
 				return (float) originScale;
 			}
 			
 			// In front of last?
 			if (Vector3.Angle (transform.forward, GetAreaPosition (sortingAreas.Count-1) - followPosition) > 90f)
 			{
+				if (sortingMapScaleType == SortingMapScaleType.AnimationCurve)
+				{
+					float scaleValue = scalingAnimationCurve.Evaluate (1f) * 100f;
+					return Mathf.Max (scaleValue, 1f);
+				}
 				return (float) sortingAreas [sortingAreas.Count-1].scale;
 			}
 			
 			// In between two?
+			if (sortingMapScaleType == SortingMapScaleType.AnimationCurve)
+			{
+				int i = sortingAreas.Count-1;
+				float angle = Vector3.Angle (transform.forward, GetAreaPosition (i) - followPosition);
+				float proportionAlong = 1 - Vector3.Distance (GetAreaPosition (i), followPosition) / sortingAreas [i].z * Mathf.Cos (Mathf.Deg2Rad * angle);
+
+				float scaleValue = scalingAnimationCurve.Evaluate (proportionAlong) * 100f;;
+				return Mathf.Max (scaleValue, 1f);
+			}
+
 			for (int i=0; i<sortingAreas.Count; i++)
 			{
 				float angle = Vector3.Angle (transform.forward, GetAreaPosition (i) - followPosition);

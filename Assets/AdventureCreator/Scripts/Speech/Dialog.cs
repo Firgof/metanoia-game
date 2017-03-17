@@ -31,6 +31,7 @@ namespace AC
 		public List<Speech> speechList = new List<Speech>();
 
 		private AudioSource defaultAudioSource;
+		private AudioSource narratorAudioSource;
 
 
 		public void OnAwake ()
@@ -134,12 +135,28 @@ namespace AC
 
 
 		/**
-		 * <summary>Gets the default AudioSource, as set in the Scene Manager.</summary>
-		 * <returns>The default AudioSource</returns>
+		 * <summary>Gets, and creates if necessary, an AudioSource used for Narration speech.</summary>
+		 * <returns>The AudioSource for Narration speech</returns>
 		 */
-		public AudioSource GetDefaultAudioSource ()
+		public AudioSource GetNarratorAudioSource ()
 		{
-			return defaultAudioSource;
+			if (narratorAudioSource == null)
+			{
+				GameObject narratorSoundOb = new GameObject ("Narrator");
+				UnityVersionHandler.PutInFolder (narratorSoundOb, "_Sounds");
+
+				narratorAudioSource = narratorSoundOb.AddComponent <AudioSource>();
+				AdvGame.AssignMixerGroup (narratorAudioSource, SoundType.Speech);
+				#if UNITY_5
+				narratorAudioSource.spatialBlend = 0f;
+				#endif
+
+				Sound narratorSound = narratorSoundOb.AddComponent <Sound>();
+				narratorSound.soundType = SoundType.Speech;
+				narratorSound.SetMaxVolume ();
+			}
+
+			return narratorAudioSource;
 		}
 
 
@@ -200,6 +217,39 @@ namespace AC
 			foreach (Speech speech in speechList)
 			{
 				if (speech.hasAudio)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+
+		/**
+		 * <summary>Checks if any speech is currently playing.</summary>
+		 * <param name = "ignoreBackgroundSpeech">If True, then only gameplay-blocking speech will be accounted for</param>
+		 * <returns>True if any speech is currently playing</returns>
+		 */
+		public bool IsAnySpeechPlaying (bool ignoreBackgroundSpeech = false)
+		{
+			if (speechList.Count > 0)
+			{
+				if (ignoreBackgroundSpeech)
+				{
+					if (KickStarter.stateHandler.gameState == GameState.Normal)
+					{
+						return false;
+					}
+
+					for (int i=0; i<speechList.Count; i++)
+					{
+						if (!speechList[i].isBackground)
+						{
+							return true;
+						}
+					}
+				}
+				else
 				{
 					return true;
 				}
@@ -299,6 +349,29 @@ namespace AC
 			{
 				KickStarter.playerMenus.ForceOffSubtitles ();
 			}
+		}
+
+
+		/**
+		 * <summary>Kills a given Speech line.</summary>
+		 * <param name = "speech">The Speech class instance to end.</param>
+		 * <param name = "stopCharacter">If True, then the speaking character will cease their talking animation</param>
+		 */
+		public void KillDialog (Speech speech)
+		{
+			if (speech != null)
+			{
+				if (speechList.Contains (speech))
+				{
+					EndSpeech (speechList.IndexOf (speech), true);
+				}
+				else
+				{
+					ACDebug.Log ("Cannot kill dialog '" + speech.log.fullText + "' because it is not in the speech list.");
+				}
+			}
+
+			KickStarter.stateHandler.UpdateAllMaxVolumes ();
 		}
 
 
@@ -560,9 +633,16 @@ namespace AC
 		{
 			Speech oldSpeech = speechList[i];
 			KickStarter.playerMenus.RemoveSpeechFromMenu (oldSpeech);
-			if (stopCharacter && oldSpeech.GetSpeakingCharacter ())
+			if (stopCharacter)
 			{
-				oldSpeech.GetSpeakingCharacter ().StopSpeaking ();
+				if (oldSpeech.GetSpeakingCharacter ())
+				{
+					oldSpeech.GetSpeakingCharacter ().StopSpeaking ();
+				}
+				else
+				{
+					oldSpeech.EndSpeechAudio ();
+				}
 			}
 			speechList.RemoveAt (i);
 			
@@ -579,6 +659,7 @@ namespace AC
 		private void OnDestroy ()
 		{
 			defaultAudioSource = null;
+			narratorAudioSource = null;
 		}
 
 	}

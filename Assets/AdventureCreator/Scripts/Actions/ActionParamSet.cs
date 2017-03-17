@@ -28,7 +28,6 @@ namespace AC
 		
 		public ActionList actionList;
 		public int actionListConstantID;
-		
 		public ActionListAsset actionListAsset;
 
 		public bool changeOwn;
@@ -42,6 +41,9 @@ namespace AC
 		public int gameObjectConstantID;
 
 		public Object unityObjectValue;
+
+		public SetParamMethod setParamMethod = SetParamMethod.EnteredHere;
+		public int globalVariableID;
 		
 		private ActionParameter _parameter;
 		#if UNITY_EDITOR
@@ -132,31 +134,54 @@ namespace AC
 				ACDebug.LogWarning ("Cannot set parameter value since it cannot be found!");
 				return 0f;
 			}
-			
-			if (_parameter.parameterType == ParameterType.Boolean ||
-			    _parameter.parameterType == ParameterType.Integer ||
-			    _parameter.parameterType == ParameterType.GlobalVariable ||
-			    _parameter.parameterType == ParameterType.LocalVariable ||
-			    _parameter.parameterType == ParameterType.InventoryItem)
+
+			if (setParamMethod == SetParamMethod.CopiedFromGlobalVariable)
 			{
-				_parameter.intValue = intValue;
+				GVar gVar = GlobalVariables.GetVariable (globalVariableID);
+				if (gVar != null)
+				{
+					if (_parameter.parameterType == ParameterType.Boolean ||
+						_parameter.parameterType == ParameterType.Integer)
+					{
+						_parameter.intValue = gVar.val;
+					}
+					else if (_parameter.parameterType == ParameterType.Float)
+					{
+						_parameter.floatValue = gVar.floatVal;
+					}
+					else if (_parameter.parameterType == ParameterType.String)
+					{
+						_parameter.stringValue = GlobalVariables.GetStringValue (globalVariableID, true, Options.GetLanguage ());
+					}
+				}
 			}
-			else if (_parameter.parameterType == ParameterType.Float)
+			else if (setParamMethod == SetParamMethod.EnteredHere)
 			{
-				_parameter.floatValue = floatValue;
-			}
-			else if (_parameter.parameterType == ParameterType.String)
-			{
-				_parameter.stringValue = stringValue;
-			}
-			else if (_parameter.parameterType == ParameterType.GameObject)
-			{
-				_parameter.gameObject = gameobjectValue;
-				_parameter.intValue = gameObjectConstantID;
-			}
-			else if (_parameter.parameterType == ParameterType.UnityObject)
-			{
-				_parameter.objectValue = unityObjectValue;
+				if (_parameter.parameterType == ParameterType.Boolean ||
+				    _parameter.parameterType == ParameterType.Integer ||
+				    _parameter.parameterType == ParameterType.GlobalVariable ||
+				    _parameter.parameterType == ParameterType.LocalVariable ||
+				    _parameter.parameterType == ParameterType.InventoryItem)
+				{
+					_parameter.intValue = intValue;
+				}
+				else if (_parameter.parameterType == ParameterType.Float)
+				{
+					_parameter.floatValue = floatValue;
+				}
+				else if (_parameter.parameterType == ParameterType.String)
+				{
+					_parameter.stringValue = stringValue;
+				}
+				else if (_parameter.parameterType == ParameterType.GameObject)
+				{
+					_parameter.gameObject = gameobjectValue;
+					_parameter.intValue = gameObjectConstantID;
+				}
+				else if (_parameter.parameterType == ParameterType.UnityObject)
+				{
+					_parameter.objectValue = unityObjectValue;
+				}
 			}
 
 			return 0f;
@@ -261,63 +286,84 @@ namespace AC
 
 			parameterLabel = _parameter.label;
 
-			if (_parameter.parameterType == ParameterType.Boolean)
-			{
-				bool boolValue = (intValue == 1) ? true : false;
-				boolValue = EditorGUILayout.Toggle ("Set as:", boolValue);
-				intValue = (boolValue) ? 1 : 0;
-			}
-			else if (_parameter.parameterType == ParameterType.Integer)
-			{
-				intValue = EditorGUILayout.IntField ("Set as:", intValue);
-			}
-			else if (_parameter.parameterType == ParameterType.Float)
-			{
-				floatValue = EditorGUILayout.FloatField ("Set as:", floatValue);
-			}
-			else if (_parameter.parameterType == ParameterType.String)
-			{
-				stringValue = EditorGUILayout.TextField ("Set as:", stringValue);
-			}
-			else if (_parameter.parameterType == ParameterType.GameObject)
-			{
-				gameobjectValue = (GameObject) EditorGUILayout.ObjectField ("Set to:", gameobjectValue, typeof (GameObject), true);
+			setParamMethod = (SetParamMethod) EditorGUILayout.EnumPopup ("New value is:", setParamMethod);
 
-				gameObjectConstantID = FieldToID (gameobjectValue, gameObjectConstantID);
-				gameobjectValue = IDToField (gameobjectValue, gameObjectConstantID, false);
-			}
-			else if (_parameter.parameterType == ParameterType.GlobalVariable)
+			if (setParamMethod == SetParamMethod.EnteredHere)
 			{
-				if (AdvGame.GetReferences ().variablesManager == null || AdvGame.GetReferences ().variablesManager.vars == null || AdvGame.GetReferences ().variablesManager.vars.Count == 0)
+				if (_parameter.parameterType == ParameterType.Boolean)
 				{
-					EditorGUILayout.HelpBox ("No Global variables exist!", MessageType.Info);
+					bool boolValue = (intValue == 1) ? true : false;
+					boolValue = EditorGUILayout.Toggle ("Set as:", boolValue);
+					intValue = (boolValue) ? 1 : 0;
+				}
+				else if (_parameter.parameterType == ParameterType.Integer)
+				{
+					intValue = EditorGUILayout.IntField ("Set as:", intValue);
+				}
+				else if (_parameter.parameterType == ParameterType.Float)
+				{
+					floatValue = EditorGUILayout.FloatField ("Set as:", floatValue);
+				}
+				else if (_parameter.parameterType == ParameterType.String)
+				{
+					stringValue = EditorGUILayout.TextField ("Set as:", stringValue);
+				}
+				else if (_parameter.parameterType == ParameterType.GameObject)
+				{
+					gameobjectValue = (GameObject) EditorGUILayout.ObjectField ("Set to:", gameobjectValue, typeof (GameObject), true);
+
+					gameObjectConstantID = FieldToID (gameobjectValue, gameObjectConstantID);
+					gameobjectValue = IDToField (gameobjectValue, gameObjectConstantID, false);
+				}
+				else if (_parameter.parameterType == ParameterType.GlobalVariable)
+				{
+					if (AdvGame.GetReferences ().variablesManager == null || AdvGame.GetReferences ().variablesManager.vars == null || AdvGame.GetReferences ().variablesManager.vars.Count == 0)
+					{
+						EditorGUILayout.HelpBox ("No Global variables exist!", MessageType.Info);
+					}
+					else
+					{
+						intValue = ShowVarSelectorGUI (AdvGame.GetReferences ().variablesManager.vars, intValue);
+					}
+				}
+				else if (_parameter.parameterType == ParameterType.UnityObject)
+				{
+					unityObjectValue = (Object) EditorGUILayout.ObjectField ("Set to:", unityObjectValue, typeof (Object), true);
+				}
+				else if (_parameter.parameterType == ParameterType.InventoryItem)
+				{
+					intValue = ShowInvSelectorGUI (intValue);
+				}
+				else if (_parameter.parameterType == ParameterType.LocalVariable)
+				{
+					if (isAssetFile)
+					{
+						EditorGUILayout.HelpBox ("Cannot access local variables from an asset file.", MessageType.Warning);
+					}
+					else if (KickStarter.localVariables == null || KickStarter.localVariables.localVars == null || KickStarter.localVariables.localVars.Count == 0)
+					{
+						EditorGUILayout.HelpBox ("No Local variables exist!", MessageType.Info);
+					}
+					else
+					{
+						intValue = ShowVarSelectorGUI (KickStarter.localVariables.localVars, intValue);
+					}
+				}
+			}
+			else
+			{
+				if (AdvGame.GetReferences () != null && AdvGame.GetReferences ().variablesManager != null && AdvGame.GetReferences ().variablesManager.vars != null && AdvGame.GetReferences ().variablesManager.vars.Count > 0)
+				{
+					globalVariableID = ShowVarSelectorGUI (AdvGame.GetReferences ().variablesManager.vars, globalVariableID);
+
+					if (_parameter.parameterType == ParameterType.GameObject || _parameter.parameterType == ParameterType.GlobalVariable || _parameter.parameterType == ParameterType.InventoryItem || _parameter.parameterType == ParameterType.LocalVariable || _parameter.parameterType == ParameterType.UnityObject)
+					{
+						EditorGUILayout.HelpBox ("Parameters of type '" + _parameter.parameterType + "' cannot have values transferred from Global Variables.", MessageType.Warning);
+					}
 				}
 				else
 				{
-					intValue = ShowVarSelectorGUI (AdvGame.GetReferences ().variablesManager.vars, intValue);
-				}
-			}
-			else if (_parameter.parameterType == ParameterType.UnityObject)
-			{
-				unityObjectValue = (Object) EditorGUILayout.ObjectField ("Set to:", unityObjectValue, typeof (Object), true);
-			}
-			else if (_parameter.parameterType == ParameterType.InventoryItem)
-			{
-				intValue = ShowInvSelectorGUI (intValue);
-			}
-			else if (_parameter.parameterType == ParameterType.LocalVariable)
-			{
-				if (isAssetFile)
-				{
-					EditorGUILayout.HelpBox ("Cannot access local variables from an asset file.", MessageType.Warning);
-				}
-				else if (KickStarter.localVariables == null || KickStarter.localVariables.localVars == null || KickStarter.localVariables.localVars.Count == 0)
-				{
-					EditorGUILayout.HelpBox ("No Local variables exist!", MessageType.Info);
-				}
-				else
-				{
-					intValue = ShowVarSelectorGUI (KickStarter.localVariables.localVars, intValue);
+					EditorGUILayout.HelpBox ("No Global Variables found!", MessageType.Warning);
 				}
 			}
 		}

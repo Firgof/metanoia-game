@@ -20,6 +20,11 @@ namespace AC
 	public class ACInstaller
 	{
 
+		private const string defaultNavMeshLayer = "NavMesh";
+		private const string defaultBackgroundImageLayer = "BackgroundImage";
+		private const string defaultDistantHotspotLayer = "DistantHotspot";
+		private const string defaultMenuAxis = "Menu";
+
 		static ACInstaller ()
 		{
 			CheckInstall ();
@@ -28,7 +33,7 @@ namespace AC
 
 		public static bool IsInstalled ()
 		{
-			if (IsAxisDefined ("Menu") && IsLayerDefined ("NavMesh") && IsLayerDefined ("BackgroundImage"))
+			if (IsAxisDefined (defaultMenuAxis) && IsLayerDefined (defaultNavMeshLayer) && IsLayerDefined (defaultBackgroundImageLayer) && IsLayerDefined (defaultDistantHotspotLayer))
 			{
 				return true;
 			}
@@ -47,11 +52,12 @@ namespace AC
 
 		public static void DoInstall ()
 		{
-			bool gotMenu = IsAxisDefined ("Menu");
-			bool gotNavMesh = IsLayerDefined ("NavMesh");
-			bool gotBackgroundImage = IsLayerDefined ("BackgroundImage");
+			bool gotMenu = IsAxisDefined (defaultMenuAxis);
+			bool gotNavMesh = IsLayerDefined (defaultNavMeshLayer);
+			bool gotBackgroundImage = IsLayerDefined (defaultBackgroundImageLayer);
+			bool gotDistantHotspot = IsLayerDefined (defaultDistantHotspotLayer);
 
-			if (!gotMenu || !gotNavMesh || !gotBackgroundImage)
+			if (!gotMenu || !gotNavMesh || !gotBackgroundImage || !gotDistantHotspot)
 			{
 				string changesToMake = "";
 				if (!gotMenu)
@@ -60,11 +66,15 @@ namespace AC
 				}
 				if (!gotNavMesh)
 				{
-					changesToMake += "'NavMesh' - a Layer used for pathfinding\r\n";
+					changesToMake += "'" + defaultNavMeshLayer + "' - a Layer used for pathfinding\r\n";
 				}
 				if (!gotBackgroundImage)
 				{
-					changesToMake += "'BackgroundImage' - a Layer used by 2.5D cameras\r\n";
+					changesToMake += "'" + defaultBackgroundImageLayer + "' - a Layer used by 2.5D cameras\r\n";
+				}
+				if (!gotDistantHotspot)
+				{
+					changesToMake += "'" + defaultDistantHotspotLayer + "' - a Layer used by Hotspots too far away\r\n";
 				}
 
 				bool canProceed = EditorUtility.DisplayDialog ("Adventure Creator installation", "Adventure Creator requires that the following be created:\r\n\r\n" + changesToMake + "\r\nAC can make the necessary changes for you, if you wish. Proceed?", "OK", "Cancel");
@@ -81,7 +91,7 @@ namespace AC
 		{
 			AddAxis (new InputAxis ()
 			{
-				name = "Menu",
+				name = defaultMenuAxis,
 				positiveButton = "escape",
 				gravity = 1000f,
 				dead = 0.001f,
@@ -94,8 +104,9 @@ namespace AC
 
 		private static void DefineLayers ()
 		{
-			IsLayerDefined ("NavMesh", true);
-			IsLayerDefined ("BackgroundImage", true);
+			IsLayerDefined (defaultNavMeshLayer, true);
+			IsLayerDefined (defaultBackgroundImageLayer, true);
+			IsLayerDefined (defaultDistantHotspotLayer, true);
 		}
 
 

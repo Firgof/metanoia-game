@@ -28,6 +28,9 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("Unique Dialogue System variable (Boolean) to record whether the GameObject has been destroyed/disabled.")]
         public string variableName = string.Empty;
 
+        [Tooltip("Spawn an instance of this when destroyed.")]
+        public GameObject spawnWhenDestroyed;
+
         protected string ActualVariableName
         {
             get { return string.IsNullOrEmpty(variableName) ? OverrideActorName.GetInternalName(transform) : variableName; }
@@ -66,6 +69,7 @@ namespace PixelCrushers.DialogueSystem
                         gameObject.SetActive(false);
                         break;
                 }
+                SpawnCorpse();
             }
         }
 
@@ -99,6 +103,7 @@ namespace PixelCrushers.DialogueSystem
         private void MarkDestroyed()
         {
             DialogueLua.SetVariable(ActualVariableName, true);
+            SpawnCorpse();
         }
 
         public void OnDisable()
@@ -106,6 +111,12 @@ namespace PixelCrushers.DialogueSystem
             if (!(listenForOnDestroy && (recordOn == RecordOn.Disable))) return;
             MarkDestroyed();
             PersistentDataManager.UnregisterPersistentData(gameObject);
+        }
+
+        private void SpawnCorpse()
+        {
+            if (spawnWhenDestroyed == null) return;
+            Instantiate(spawnWhenDestroyed, transform.position, transform.rotation);
         }
 
     }

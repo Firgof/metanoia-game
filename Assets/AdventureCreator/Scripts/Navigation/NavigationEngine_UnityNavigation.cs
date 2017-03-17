@@ -102,6 +102,36 @@ namespace AC
 		}
 
 
+		public override Vector3 GetPointNear (Vector3 point, float minDistance, float maxDistance)
+		{
+			Vector2 circle = Random.insideUnitCircle;
+
+			Vector3 randomOffset = new Vector3 (circle.x, 0f, circle.y) * Random.Range (minDistance, maxDistance);
+			Vector3 randomPoint = point + randomOffset;
+
+			#if UNITY_5
+
+			NavMeshHit hit = new NavMeshHit ();
+			bool blocked = NavMesh.Raycast (point, randomPoint, out hit, NavMesh.AllAreas);
+			if (!blocked)
+			{
+				return randomPoint;
+			}
+
+			if (hit.position != Vector3.zero)
+			{
+				return hit.position;
+			}
+			return base.GetPointNear (point, minDistance, maxDistance);
+
+			#else
+
+			return randomPoint;
+
+			#endif
+		}
+
+
 		public override string GetPrefabName ()
 		{
 			return ("NavMeshSegment");

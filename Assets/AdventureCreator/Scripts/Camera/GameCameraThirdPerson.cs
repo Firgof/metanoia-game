@@ -55,7 +55,7 @@ namespace AC
 		/** If True, then focalDistance will match the distance to target */
 		public bool focalPointIsTarget = false;
 
-		/** If True, then the cursor must be locked for spin rotation to occur (see: cursorIsLocked in PlayerInput) */
+		/** If True, then the cursor must be locked for spin rotation to occur (see: IsCursorLocked in PlayerInput) */
 		public bool toggleCursor = false;
 
 		/** The speed of spin rotations */
@@ -256,7 +256,7 @@ namespace AC
 					distance = Mathf.Clamp (distance, minDistance, maxDistance);
 				}
 				
-				if (KickStarter.playerInput.cursorIsLocked || !toggleCursor)
+				if (KickStarter.playerInput.IsCursorLocked () || !toggleCursor)
 				{
 					if (!isDragControlled)
 					{
@@ -266,7 +266,14 @@ namespace AC
 					{
 						if (KickStarter.playerInput.GetDragState () == DragState._Camera)
 						{
-							inputMovement = KickStarter.playerInput.GetDragVector ();
+							if (KickStarter.playerInput.IsCursorLocked ())
+							{
+								inputMovement = KickStarter.playerInput.GetFreeAim ();
+							}
+							else
+							{
+								inputMovement = KickStarter.playerInput.GetDragVector ();
+							}
 						}
 						else
 						{

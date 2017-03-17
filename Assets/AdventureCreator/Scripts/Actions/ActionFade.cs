@@ -140,7 +140,7 @@ namespace AC
 			isInstant = EditorGUILayout.Toggle ("Instant?", isInstant);
 			if (!isInstant)
 			{
-				fadeSpeed = EditorGUILayout.Slider ("Time to fade:", fadeSpeed, 0, 10);
+				fadeSpeed = EditorGUILayout.Slider ("Time to fade:", fadeSpeed, 0, 3);
 				forceCompleteTransition = EditorGUILayout.Toggle ("Force complete transition?", forceCompleteTransition);
 				willWait = EditorGUILayout.Toggle ("Wait until finish?", willWait);
 			}

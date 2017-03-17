@@ -394,7 +394,12 @@ namespace AC
 				// Restore any deleted objects (if told to)
 				if (saveObject == null && _transform.bringBack)
 				{
-					Object[] assets = Resources.LoadAll ("", typeof (GameObject));
+					Object[] assets = Resources.LoadAll ("SaveableData/Prefabs", typeof (GameObject));
+					if (assets == null || assets.Length == 0)
+					{
+						assets = Resources.LoadAll ("", typeof (GameObject));
+					}
+
 					foreach (Object asset in assets)
 					{
 						if (asset is GameObject)

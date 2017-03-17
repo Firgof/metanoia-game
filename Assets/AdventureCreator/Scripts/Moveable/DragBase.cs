@@ -32,6 +32,8 @@ namespace AC
 		public float maxSpeed = 200f;
 		/** How much player movement is reduced by when the object is being dragged */
 		public float playerMovementReductionFactor = 0f;
+		/** The influence that player movement has on the drag force */
+		public float playerMovementInfluence = 1f;
 
 		/** If True, the object can be moved towards and away from the camera */
 		public bool allowZooming = false;
@@ -184,7 +186,7 @@ namespace AC
 		}
 
 
-		private void OnCollisionEnter (Collision collision)
+		protected void BaseOnCollisionEnter (Collision collision)
 		{
 			if (collision.gameObject.tag != Tags.player)
 			{

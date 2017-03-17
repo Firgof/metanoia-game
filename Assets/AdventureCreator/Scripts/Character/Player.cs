@@ -248,7 +248,7 @@ namespace AC
 			{
 				return;
 			}
-			
+
 			if (IsGrounded () && activePath == null)
 			{
 				if (_rigidbody != null)
@@ -659,12 +659,16 @@ namespace AC
 		/**
 		 * <summary>Updates its own variables from a PlayerData class.</summary>
 		 * <param name = "playerData">The PlayerData class to load from</param>
+		 * <param name = "justAnimationData">If True, then only animation data (and sound) changes will be loaded, as opposed to position, rotaion, etc</param>
 		 */
-		public void LoadPlayerData (PlayerData playerData)
+		public void LoadPlayerData (PlayerData playerData, bool justAnimationData = false)
 		{
-			Teleport (new Vector3 (playerData.playerLocX, playerData.playerLocY, playerData.playerLocZ));
-			SetRotation (playerData.playerRotY);
-			SetMoveDirectionAsForward ();
+			if (!justAnimationData)
+			{
+				Teleport (new Vector3 (playerData.playerLocX, playerData.playerLocY, playerData.playerLocZ));
+				SetRotation (playerData.playerRotY);
+				SetMoveDirectionAsForward ();
+			}
 
 			walkSpeedScale = playerData.playerWalkSpeed;
 			runSpeedScale = playerData.playerRunSpeed;
@@ -694,7 +698,7 @@ namespace AC
 			// Sound
 			walkSound = AssetLoader.RetrieveAsset (walkSound, playerData.playerWalkSound);
 			runSound = AssetLoader.RetrieveAsset (runSound, playerData.playerRunSound);
-			
+
 			// Portrait graphic
 			portraitIcon.texture = AssetLoader.RetrieveAsset (portraitIcon.texture, playerData.playerPortraitGraphic);
 
@@ -742,82 +746,87 @@ namespace AC
 					GetComponent <Renderer>().sortingLayerName = playerData.playerSortingLayer;
 				}
 			}
-			
-			// Active path
-			Halt ();
-			ForceIdle ();
-			
-			if (playerData.playerPathData != null && playerData.playerPathData != "" && GetComponent <Paths>())
+
+			if (!justAnimationData)
 			{
-				Paths savedPath = GetComponent <Paths>();
-				savedPath = Serializer.RestorePathData (savedPath, playerData.playerPathData);
-				SetPath (savedPath, playerData.playerTargetNode, playerData.playerPrevNode, playerData.playerPathAffectY);
-				isRunning = playerData.playerIsRunning;
-				lockedPath = false;
-			}
-			else if (playerData.playerActivePath != 0)
-			{
-				Paths savedPath = Serializer.returnComponent <Paths> (playerData.playerActivePath);
-				if (savedPath)
+				// Active path
+				Halt ();
+				ForceIdle ();
+				
+				if (playerData.playerPathData != null && playerData.playerPathData != "" && GetComponent <Paths>())
 				{
-					lockedPath = playerData.playerLockedPath;
-					
-					if (lockedPath)
+					Paths savedPath = GetComponent <Paths>();
+					savedPath = Serializer.RestorePathData (savedPath, playerData.playerPathData);
+					SetPath (savedPath, playerData.playerTargetNode, playerData.playerPrevNode, playerData.playerPathAffectY);
+					isRunning = playerData.playerIsRunning;
+					lockedPath = false;
+				}
+				else if (playerData.playerActivePath != 0)
+				{
+					Paths savedPath = Serializer.returnComponent <Paths> (playerData.playerActivePath);
+					if (savedPath)
 					{
-						SetLockedPath (savedPath);
+						lockedPath = playerData.playerLockedPath;
+						
+						if (lockedPath)
+						{
+							SetLockedPath (savedPath);
+						}
+						else
+						{
+							SetPath (savedPath, playerData.playerTargetNode, playerData.playerPrevNode);
+						}
+					}
+				}
+				
+				// Previous path
+				if (playerData.lastPlayerActivePath != 0)
+				{
+					Paths savedPath = Serializer.returnComponent <Paths> (playerData.lastPlayerActivePath);
+					if (savedPath)
+					{
+						SetLastPath (savedPath, playerData.lastPlayerTargetNode, playerData.lastPlayerPrevNode);
+					}
+				}
+				
+				// Head target
+				lockHotspotHeadTurning = playerData.playerLockHotspotHeadTurning;
+				if (playerData.isHeadTurning)
+				{
+					ConstantID _headTargetID = Serializer.returnComponent <ConstantID> (playerData.headTargetID);
+					if (_headTargetID != null)
+					{
+						SetHeadTurnTarget (_headTargetID.transform, new Vector3 (playerData.headTargetX, playerData.headTargetY, playerData.headTargetZ), true);
 					}
 					else
 					{
-						SetPath (savedPath, playerData.playerTargetNode, playerData.playerPrevNode);
+						ClearHeadTurnTarget (true);
 					}
-				}
-			}
-			
-			// Previous path
-			if (playerData.lastPlayerActivePath != 0)
-			{
-				Paths savedPath = Serializer.returnComponent <Paths> (playerData.lastPlayerActivePath);
-				if (savedPath)
-				{
-					SetLastPath (savedPath, playerData.lastPlayerTargetNode, playerData.lastPlayerPrevNode);
-				}
-			}
-			
-			// Head target
-			lockHotspotHeadTurning = playerData.playerLockHotspotHeadTurning;
-			if (playerData.isHeadTurning)
-			{
-				ConstantID _headTargetID = Serializer.returnComponent <ConstantID> (playerData.headTargetID);
-				if (_headTargetID != null)
-				{
-					SetHeadTurnTarget (_headTargetID.transform, new Vector3 (playerData.headTargetX, playerData.headTargetY, playerData.headTargetZ), true);
 				}
 				else
 				{
 					ClearHeadTurnTarget (true);
 				}
-			}
-			else
-			{
-				ClearHeadTurnTarget (true);
-			}
-			
-			ignoreGravity = playerData.playerIgnoreGravity;
-
-			if (GetComponentsInChildren <FollowSortingMap>() != null)
-			{
-				FollowSortingMap[] followSortingMaps = GetComponentsInChildren <FollowSortingMap>();
-				SortingMap customSortingMap = Serializer.returnComponent <SortingMap> (playerData.customSortingMapID);
 				
-				foreach (FollowSortingMap followSortingMap in followSortingMaps)
+				ignoreGravity = playerData.playerIgnoreGravity;
+
+				if (GetComponentsInChildren <FollowSortingMap>() != null)
 				{
-					followSortingMap.followSortingMap = playerData.followSortingMap;
-					if (!playerData.followSortingMap)
+					FollowSortingMap[] followSortingMaps = GetComponentsInChildren <FollowSortingMap>();
+					SortingMap customSortingMap = Serializer.returnComponent <SortingMap> (playerData.customSortingMapID);
+					
+					foreach (FollowSortingMap followSortingMap in followSortingMaps)
 					{
-						followSortingMap.SetSortingMap (customSortingMap);
+						followSortingMap.followSortingMap = playerData.followSortingMap;
+						if (!playerData.followSortingMap)
+						{
+							followSortingMap.SetSortingMap (customSortingMap);
+						}
 					}
 				}
 			}
+
+			ignoreGravity = playerData.playerIgnoreGravity;
 		}
 
 	}

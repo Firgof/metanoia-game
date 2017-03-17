@@ -18,6 +18,7 @@ namespace AC
 			EditorGUILayout.LabelField ("Movment settings:", EditorStyles.boldLabel);
 			_target.maxSpeed = EditorGUILayout.FloatField ("Max speed:", _target.maxSpeed);
 			_target.playerMovementReductionFactor = EditorGUILayout.Slider ("Player movement reduction:", _target.playerMovementReductionFactor, 0f, 1f);
+			_target.playerMovementInfluence = EditorGUILayout.FloatField ("Player movement influence:", _target.playerMovementInfluence);
 			_target.invertInput = EditorGUILayout.Toggle ("Invert input?", _target.invertInput);
 			EditorGUILayout.EndVertical ();
 
@@ -28,11 +29,18 @@ namespace AC
 			if (_target.dragMode == DragMode.LockToTrack)
 			{
 				_target.track = (DragTrack) EditorGUILayout.ObjectField ("Track to stick to:", _target.track, typeof (DragTrack), true);
+
+				if (_target.track != null && _target.track is DragTrack_Straight)
+				{
+					EditorGUILayout.HelpBox ("For best results, ensure the first collider on this GameObject is a Sphere Collider covering the breath of the mesh.\r\nIt can be disabled if necessary, but will be used to set correct limit boundaries.", MessageType.Info);
+				}
+
 				_target.setOnStart = EditorGUILayout.Toggle ("Set starting position?", _target.setOnStart);
 				if (_target.setOnStart)
 				{
 					_target.trackValueOnStart = EditorGUILayout.Slider ("Initial distance along:", _target.trackValueOnStart, 0f, 1f);
 				}
+				_target.retainOriginalTransform = EditorGUILayout.ToggleLeft ("Maintain original child transforms?", _target.retainOriginalTransform);
 
 				EditorGUILayout.BeginHorizontal ();
 				_target.interactionOnMove = (Interaction) EditorGUILayout.ObjectField ("Interaction on move:", _target.interactionOnMove, typeof (Interaction), true);

@@ -89,6 +89,8 @@ namespace AC
 		public bool playerIsOff;
 		/** True if keyboard/controller can be used to control menus during gameplay */
 		public bool canKeyboardControlMenusDuringGameplay;
+		/** The state of the cursor toggle (1 = on, 2 = off) */
+		public int toggleCursorState;
 
 		/** The IDs and loop states of all queued music tracks, including the one currently-playing */
 		public string musicQueueData;
@@ -98,6 +100,8 @@ namespace AC
 		public int musicTimeSamples;
 		/** The time position of the last-played music track */
 		public int lastMusicTimeSamples;
+		/** The IDs and time positions of all tracks that have been played before */
+		public string oldMusicTimeSamples;
 
 		/** The currently-set AC_MovementMethod enum, converted to an integer */
 		public int movementMethod;

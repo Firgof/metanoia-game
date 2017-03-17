@@ -321,7 +321,7 @@ namespace PixelCrushers.DialogueSystem.AdventureCreator
             {
                 KickStarter.stateHandler.gameState = GameState.DialogOptions;
                 KickStarter.cursorManager.cursorDisplay = CursorDisplay.Always;
-                KickStarter.playerInput.cursorIsLocked = false;
+                KickStarter.playerInput.SetInGameCursorState(false);
                 yield return null;
             }
             KickStarter.cursorManager.cursorDisplay = previousCursorDisplay;

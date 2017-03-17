@@ -24,13 +24,32 @@ namespace AC
 			SortingMap _target = (SortingMap) target;
 
 			EditorGUILayout.BeginVertical ("Button");
-				_target.mapType = (SortingMapType) EditorGUILayout.EnumPopup ("Affect sprite's:", _target.mapType);
-				_target.affectScale = EditorGUILayout.Toggle ("Affect Character scale?", _target.affectScale);
-				if (_target.affectScale)
+			_target.mapType = (SortingMapType) EditorGUILayout.EnumPopup ("Affect sprite's:", _target.mapType);
+			_target.affectScale = EditorGUILayout.Toggle ("Affect Character scale?", _target.affectScale);
+			if (_target.affectScale)
+			{
+				_target.affectSpeed = EditorGUILayout.Toggle ("Affect Character speed?", _target.affectSpeed);
+
+				_target.sortingMapScaleType = (SortingMapScaleType) EditorGUILayout.EnumPopup ("Character scaling mode:", _target.sortingMapScaleType);
+				if (_target.sortingMapScaleType == SortingMapScaleType.Linear || _target.sortingAreas.Count == 0)
 				{
-					_target.affectSpeed = EditorGUILayout.Toggle ("Affect Character speed?", _target.affectSpeed);
 					_target.originScale = EditorGUILayout.IntField ("Start scale (%):", _target.originScale);
+
+					if (_target.sortingMapScaleType == SortingMapScaleType.AnimationCurve)
+					{
+						EditorGUILayout.HelpBox ("The Sorting Map must have at least one area defined to make use of an animation curve.", MessageType.Warning);
+					}
 				}
+				else
+				{
+					if (_target.scalingAnimationCurve == null)
+					{
+						_target.scalingAnimationCurve = AnimationCurve.Linear (0f, 0.1f, 1f, 1f);
+					}
+					_target.scalingAnimationCurve = EditorGUILayout.CurveField ("Scaling curve:", _target.scalingAnimationCurve);
+					EditorGUILayout.HelpBox ("The curve's values will be read from 0s to 1s only.", MessageType.Info);
+				}
+			}
 			EditorGUILayout.EndVertical ();
 
 			EditorGUILayout.Space ();
@@ -80,7 +99,7 @@ namespace AC
 
 				EditorGUILayout.EndHorizontal ();
 
-				if (_target.affectScale)
+				if (_target.affectScale && _target.sortingMapScaleType == SortingMapScaleType.Linear)
 				{
 					area.scale = EditorGUILayout.IntField ("End scale (%):", area.scale);
 				}
@@ -120,7 +139,7 @@ namespace AC
 				}
 			}
 
-			if (_target.affectScale && _target.sortingAreas.Count > 1)
+			if (_target.affectScale && _target.sortingAreas.Count > 1 && _target.sortingMapScaleType == SortingMapScaleType.Linear)
 			{
 				if (GUILayout.Button ("Interpolate in-between scales"))
 				{

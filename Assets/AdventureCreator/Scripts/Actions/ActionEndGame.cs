@@ -30,6 +30,7 @@ namespace AC
 		public ChooseSceneBy chooseSceneBy = ChooseSceneBy.Number;
 		public int sceneNumber;
 		public string sceneName;
+		public bool resetMenus;
 		
 		
 		public ActionEndGame ()
@@ -72,6 +73,11 @@ namespace AC
 					KickStarter.runtimeInventory.OnStart ();
 					KickStarter.runtimeVariables.OnStart ();
 
+					if (resetMenus)
+					{
+						KickStarter.playerMenus.RebuildMenus ();
+					}
+
 					KickStarter.stateHandler.CanGlobalOnStart ();
 					KickStarter.sceneChanger.ChangeScene (new SceneInfo (chooseSceneBy, sceneName, sceneNumber), false, true);
 				}
@@ -110,6 +116,8 @@ namespace AC
 				{
 					sceneNumber = EditorGUILayout.IntField ("Scene to restart to:", sceneNumber);
 				}
+
+				resetMenus = EditorGUILayout.Toggle ("Reset Menus too?", resetMenus);
 			}
 		}
 		

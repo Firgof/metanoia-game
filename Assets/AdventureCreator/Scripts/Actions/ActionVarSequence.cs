@@ -131,7 +131,13 @@ namespace AC
 					}
 					else
 					{
+						EditorGUILayout.BeginHorizontal ();
 						variableID = ShowVarGUI (AdvGame.GetReferences ().variablesManager.vars, variableID, true);
+						if (GUILayout.Button (Resource.CogIcon, GUILayout.Width (20f), GUILayout.Height (15f)))
+						{
+							SideMenu ();
+						}
+						EditorGUILayout.EndHorizontal ();
 					}
 				}
 			}
@@ -147,16 +153,55 @@ namespace AC
 					}
 					else
 					{
+						EditorGUILayout.BeginHorizontal ();
 						variableID = ShowVarGUI (KickStarter.localVariables.localVars, variableID, true);
+						if (GUILayout.Button (Resource.CogIcon, GUILayout.Width (20f), GUILayout.Height (15f)))
+						{
+							SideMenu ();
+						}
+						EditorGUILayout.EndHorizontal ();
 					}
 				}
 			}
-			
-			numSockets = EditorGUILayout.IntSlider ("# of possible values:", numSockets, 1, 10);
+
+			numSockets = EditorGUILayout.IntSlider ("# of possible values:", numSockets, 1, 20);
 			doLoop = EditorGUILayout.Toggle ("Run on a loop?", doLoop);
+		}
+
+
+		private void SideMenu ()
+		{
+			GenericMenu menu = new GenericMenu ();
+
+			menu.AddItem (new GUIContent ("Auto-create " + location.ToString () + " variable"), false, Callback, "AutoCreate");
+
+			if (variableID >= 0)
+			{
+			//	menu.AddItem (new GUIContent ("Show in Variables Manager"), false, Callback, "Show");
+			}
+
+			menu.ShowAsContext ();
 		}
 		
 		
+		private void Callback (object obj)
+		{
+			switch (obj.ToString ())
+			{
+			case "AutoCreate":
+				AutoCreateVariableWindow.Init ("Sequence/New integer", location, VariableType.Integer, this);
+				break;
+
+			case "Show":
+				if (AdvGame.GetReferences () != null && AdvGame.GetReferences ().variablesManager != null)
+				{
+					AdvGame.GetReferences ().variablesManager.ShowVariable (variableID, location);
+				}
+				break;
+			}
+		}
+
+				
 		private int ShowVarSelectorGUI (List<GVar> vars, int ID)
 		{
 			variableNumber = -1;
@@ -177,13 +222,13 @@ namespace AC
 				ID = 0;
 			}
 			
-			variableNumber = EditorGUILayout.Popup ("Variable:", variableNumber, labelList.ToArray());
+			variableNumber = EditorGUILayout.Popup ("Variable:", variableNumber, labelList.ToArray ());
 			ID = vars[variableNumber].id;
 			
 			return ID;
 		}
-		
-		
+
+
 		private int ShowVarGUI (List<GVar> vars, int ID, bool changeID)
 		{
 			if (vars.Count > 0)

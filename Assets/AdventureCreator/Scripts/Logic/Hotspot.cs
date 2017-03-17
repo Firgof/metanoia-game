@@ -367,6 +367,28 @@ namespace AC
 			CanDisplayHotspotIcon ();
 		}
 
+		private bool tooFarAway = false;
+		public void UpdateProximity (DetectHotspots detectHotspots)
+		{
+			if (detectHotspots == null) return;
+
+			tooFarAway = !detectHotspots.IsHotspotInTrigger (this);
+			if (tooFarAway)
+			{
+				if (gameObject.layer == LayerMask.NameToLayer (KickStarter.settingsManager.hotspotLayer))
+				{
+					gameObject.layer = LayerMask.NameToLayer (KickStarter.settingsManager.distantHotspotLayer);
+				}
+			}
+			else
+			{
+				if (gameObject.layer == LayerMask.NameToLayer (KickStarter.settingsManager.distantHotspotLayer))
+				{
+					gameObject.layer = LayerMask.NameToLayer (KickStarter.settingsManager.hotspotLayer);
+				}
+			}
+		}
+
 
 		private bool CanDisplayHotspotIcon ()
 		{
@@ -507,7 +529,14 @@ namespace AC
 		 */
 		public void TurnOn (bool manualSet)
 		{
-			gameObject.layer = LayerMask.NameToLayer (KickStarter.settingsManager.hotspotLayer);
+			if (tooFarAway)
+			{
+				gameObject.layer = LayerMask.NameToLayer (KickStarter.settingsManager.distantHotspotLayer);
+			}
+			else
+			{
+				gameObject.layer = LayerMask.NameToLayer (KickStarter.settingsManager.hotspotLayer);
+			}
 
 			if (manualSet)
 			{

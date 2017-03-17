@@ -527,6 +527,7 @@ namespace AC
 					
 					foreach (AC.Action _action in list)
 					{
+						if (_action == null) continue;
 						idArray.Add (_action.id);
 					}
 					
@@ -749,7 +750,10 @@ namespace AC
 			{
 				_target.actions.Clear ();
 				AC.Action newAction = ActionList.GetDefaultAction ();
-				_target.actions.Add (newAction);
+				if (newAction != null)
+				{
+					_target.actions.Add (newAction);
+				}
 			}
 		}
 

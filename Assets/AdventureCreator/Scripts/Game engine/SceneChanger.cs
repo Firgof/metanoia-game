@@ -436,6 +436,8 @@ namespace AC
 			{
 				KickStarter.levelStorage.StoreAllOpenLevelData ();
 				previousSceneInfo = new SceneInfo ();
+
+				KickStarter.saveSystem.SaveCurrentPlayerData ();
 			}
 			subScenes.Clear ();
 

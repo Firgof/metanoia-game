@@ -383,6 +383,26 @@ namespace AC
 				}
 			}
 		}
+
+
+		/**
+		 * <summary>Renames a dialogue option.</summary>
+		 * <param name = "id">The ID number of the dialogue option to rename</param>
+		 * <param name = "newLabel">The new label text to give the dialogue option<param>
+		 * <param name = "newLindID">The line ID number to give the dialogue option, as set by the Speech Manager</param>
+		 */
+		public void RenameOption (int id, string newLabel, int newLineID)
+		{
+			foreach (ButtonDialog option in options)
+			{
+				if (option.ID == id)
+				{
+					option.label = newLabel;
+					option.lineID = newLineID;
+					return;
+				}
+			}
+		}
 		
 
 		/**
@@ -400,99 +420,6 @@ namespace AC
 				}
 			}
 			return numberOn;
-		}
-		
-
-		/**
-		 * <summary>Gets an array of the "on/off" states of all dialogue options.</summary>
-		 * <returns>An array of the "on/off" states of all dialogue options.</returns>
-		 */
-		public bool[] GetOptionStates ()
-		{
-			List<bool> states = new List<bool>();
-			foreach (ButtonDialog _option in options)
-			{
-				states.Add (_option.isOn);
-			}
-			return states.ToArray ();
-		}
-		
-
-		/**
-		 * <summary>Gets an array of the "locked/unlocked" states of all dialogue options.</summary>
-		 * <returns>An array of the "locked/unlocked" states of all dialogue options.</returns>
-		 */
-		public bool[] GetOptionLocks ()
-		{
-			List<bool> locks = new List<bool>();
-			foreach (ButtonDialog _option in options)
-			{
-				locks.Add (_option.isLocked);
-			}
-			return locks.ToArray ();
-		}
-
-
-		/**
-		 * <summary>Gets an array of the "has been chosen" states of all dialogue options.</summary>
-		 * <returns>An array of the "has been chosen" states of all dialogue options.</returns>
-		 */
-		public bool[] GetOptionChosens ()
-		{
-			List<bool> locks = new List<bool>();
-			foreach (ButtonDialog _option in options)
-			{
-				locks.Add (_option.hasBeenChosen);
-			}
-			return locks.ToArray ();
-		}
-
-
-		/**
-		 * <summary>Sets the "on/off" states of all dialogue options.</summary>
-		 * <param name = "locks">An array of the "on/off" states of all dialogue options.</param>
-		 */
-		public void SetOptionStates (bool[] states)
-		{
-			for (int i=0; i<options.Count; i++)
-			{
-				if (states.Length > i)
-				{
-					options[i].isOn = states[i];
-				}
-			}
-		}
-		
-
-		/**
-		 * <summary>Sets the "locked/unlocked" states of all dialogue options.</summary>
-		 * <param name = "locks">An array of the "locked/unlocked" states of all dialogue options.</param>
-		 */
-		public void SetOptionLocks (bool[] locks)
-		{
-			for (int i=0; i<options.Count; i++)
-			{
-				if (locks.Length > i)
-				{
-					options[i].isLocked = locks[i];
-				}
-			}
-		}
-
-
-		/**
-		 * <summary>Sets the "already been chosen" states of all dialogue options.</summary>
-		 * <param name = "chosens">An array of the "already been chosen" states of all dialogue options.</param>
-		 */
-		public void SetOptionChosens (bool[] chosens)
-		{
-			for (int i=0; i<options.Count; i++)
-			{
-				if (chosens.Length > i)
-				{
-					options[i].hasBeenChosen = chosens[i];
-				}
-			}
 		}
 
 

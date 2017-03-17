@@ -282,14 +282,23 @@ namespace AC
 			{
 				KickStarter.playerCursor.UpdateCursor ();
 
-				if (gameState == GameState.Normal && KickStarter.settingsManager && KickStarter.settingsManager.hotspotIconDisplay != HotspotIconDisplay.Never)
+				if (gameState == GameState.Normal && KickStarter.settingsManager &&
+					(KickStarter.settingsManager.hotspotIconDisplay != HotspotIconDisplay.Never || (KickStarter.settingsManager.hotspotDetection == HotspotDetection.PlayerVicinity && KickStarter.settingsManager.placeDistantHotspotsOnSeparateLayer)))
 				{
 					for (_i=0; _i<hotspots.Length; _i++)
 					{
-						hotspots[_i].UpdateIcon ();
-						if (KickStarter.settingsManager.hotspotDrawing == ScreenWorld.WorldSpace)
+						if (KickStarter.settingsManager.hotspotIconDisplay != HotspotIconDisplay.Never)
 						{
-							hotspots[_i].DrawHotspotIcon (true);
+							hotspots[_i].UpdateIcon ();
+							if (KickStarter.settingsManager.hotspotDrawing == ScreenWorld.WorldSpace)
+							{
+								hotspots[_i].DrawHotspotIcon (true);
+							}
+						}
+
+						if (KickStarter.settingsManager.hotspotDetection == HotspotDetection.PlayerVicinity && KickStarter.settingsManager.placeDistantHotspotsOnSeparateLayer && KickStarter.player)
+						{
+							hotspots[_i].UpdateProximity (KickStarter.player.hotspotDetector);
 						}
 					}
 				}
@@ -473,6 +482,7 @@ namespace AC
 				}
 			}
 
+			KickStarter.playerInput._FixedUpdate ();
 			KickStarter.dialog._FixedUpdate ();
 		}
 
@@ -499,9 +509,27 @@ namespace AC
 		}
 
 
+		#if ACIgnoreOnGUI
+		#else
+
 		private void OnGUI ()
 		{
-			if (isACDisabled || !hasGameEngine)
+			if (!isACDisabled)
+			{
+				_OnGUI ();
+			}
+		}
+
+		#endif
+
+
+		/**
+		 * Runs all of AC's OnGUI code.
+		 * This is called automatically from within StateHandler, unless 'ACIgnoreOnGUI' is listed in Unity's Scripting Define Symbols box in the Player settings.
+		 */
+		public void _OnGUI ()
+		{
+			if (!hasGameEngine)
 			{
 				return;
 			}

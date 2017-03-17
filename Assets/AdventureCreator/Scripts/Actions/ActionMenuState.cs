@@ -223,6 +223,11 @@ namespace AC
 							MenuJournal journal = (MenuJournal) _element;
 							JournalPage newPage = new JournalPage (lineID, journalText);
 							journal.AddPage (newPage, onlyAddNewJournal, journalPageIndex);
+
+							if (lineID == -1)
+							{
+								ACDebug.LogWarning ("The new Journal page has no ID number, and will not be included in save game files - this can be corrected by clicking 'Gather text' in the Speech Manager");
+							}
 						}
 						else
 						{

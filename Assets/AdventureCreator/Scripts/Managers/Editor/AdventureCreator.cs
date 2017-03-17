@@ -11,7 +11,7 @@ namespace AC
 		
 		public References references;
 		
-		public static string version = "1.55b";
+		public static string version = "1.56b";
 	 
 		private bool showScene = true;
 		private bool showSettings = false;
@@ -127,6 +127,11 @@ namespace AC
 					}
 					else
 					{
+						if (references.sceneManager.name == "Demo_SceneManager" || references.sceneManager.name == "Demo2D_SceneManager")
+						{
+							EditorGUILayout.HelpBox ("The Demo Managers are for demonstration purposes only.  Modifying them to create your game may result in data loss upon upgrading - instead, use the New Game Wizard to create a new set of Managers.", MessageType.Warning);
+						}
+
 						references.sceneManager.ShowGUI ();
 					}
 				}
@@ -143,6 +148,11 @@ namespace AC
 					}
 					else
 					{
+						if (references.settingsManager.name == "Demo_SettingsManager" || references.sceneManager.name == "Demo2D_SettingsManager")
+						{
+							EditorGUILayout.HelpBox ("The Demo Managers are for demonstration purposes only.  Modifying them to create your game may result in data loss upon upgrading - instead, use the New Game Wizard to create a new set of Managers.", MessageType.Warning);
+						}
+
 						references.settingsManager.ShowGUI ();
 					}
 				}
@@ -159,6 +169,11 @@ namespace AC
 					}
 					else
 					{
+						if (references.actionsManager.name == "Demo_ActionsManager" || references.sceneManager.name == "Demo2D_ActionsManager")
+						{
+							EditorGUILayout.HelpBox ("The Demo Managers are for demonstration purposes only.  Modifying them to create your game may result in data loss upon upgrading - instead, use the New Game Wizard to create a new set of Managers.", MessageType.Warning);
+						}
+
 						references.actionsManager.ShowGUI ();
 					}
 				}
@@ -175,6 +190,11 @@ namespace AC
 					}
 					else
 					{
+						if (references.variablesManager.name == "Demo_VariablesManager" || references.sceneManager.name == "Demo2D_VariablesManager")
+						{
+							EditorGUILayout.HelpBox ("The Demo Managers are for demonstration purposes only.  Modifying them to create your game may result in data loss upon upgrading - instead, use the New Game Wizard to create a new set of Managers.", MessageType.Warning);
+						}
+
 						references.variablesManager.ShowGUI ();
 					}
 				}
@@ -191,6 +211,11 @@ namespace AC
 					}
 					else
 					{
+						if (references.inventoryManager.name == "Demo_InventoryManager" || references.sceneManager.name == "Demo2D_InventoryManager")
+						{
+							EditorGUILayout.HelpBox ("The Demo Managers are for demonstration purposes only.  Modifying them to create your game may result in data loss upon upgrading - instead, use the New Game Wizard to create a new set of Managers.", MessageType.Warning);
+						}
+
 						references.inventoryManager.ShowGUI ();
 					}
 				}
@@ -207,6 +232,11 @@ namespace AC
 					}
 					else
 					{
+						if (references.speechManager.name == "Demo_SpeechManager" || references.sceneManager.name == "Demo2D_SpeechManager")
+						{
+							EditorGUILayout.HelpBox ("The Demo Managers are for demonstration purposes only.  Modifying them to create your game may result in data loss upon upgrading - instead, use the New Game Wizard to create a new set of Managers.", MessageType.Warning);
+						}
+
 						references.speechManager.ShowGUI ();
 					}
 				}
@@ -223,6 +253,11 @@ namespace AC
 					}
 					else
 					{
+						if (references.cursorManager.name == "Demo_CursorManager" || references.sceneManager.name == "Demo2D_CursorManager")
+						{
+							EditorGUILayout.HelpBox ("The Demo Managers are for demonstration purposes only.  Modifying them to create your game may result in data loss upon upgrading - instead, use the New Game Wizard to create a new set of Managers.", MessageType.Warning);
+						}
+
 						references.cursorManager.ShowGUI ();
 					}
 				}
@@ -239,6 +274,11 @@ namespace AC
 					}
 					else
 					{
+						if (references.menuManager.name == "Demo_MenuManager" || references.sceneManager.name == "Demo2D_MenuManager")
+						{
+							EditorGUILayout.HelpBox ("The Demo Managers are for demonstration purposes only.  Modifying them to create your game may result in data loss upon upgrading - instead, use the New Game Wizard to create a new set of Managers.", MessageType.Warning);
+						}
+
 						references.menuManager.ShowGUI ();
 					}
 				}

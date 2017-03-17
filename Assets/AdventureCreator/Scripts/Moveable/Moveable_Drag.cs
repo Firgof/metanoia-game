@@ -13,6 +13,7 @@
 
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace AC
 {
@@ -31,6 +32,9 @@ namespace AC
 		public DragMode dragMode = DragMode.LockToTrack;
 		/** The DragTrack the object is locked to (if dragMode = DragMode.LockToTrack */
 		public DragTrack track;
+		/** If True, and dragMode = DragMode.LockToTrack, then the position and rotation of all child objects will be maintained when the object is attached to the track */
+		public bool retainOriginalTransform = false;
+
 		/** If True, and the object is locked to a DragTrack, then the object will be placed at a specific point along the track when the game begins */
 		public bool setOnStart = true;
 		/** How far along its DragTrack that the object should be placed at when the game begins */
@@ -75,6 +79,17 @@ namespace AC
 			if (_rigidbody)
 			{
 				SetGravity (true);
+
+				if (dragMode == DragMode.RotateOnly)
+				{
+					if (_rigidbody.constraints == RigidbodyConstraints.FreezeRotation ||
+						_rigidbody.constraints == RigidbodyConstraints.FreezeRotationX ||
+						_rigidbody.constraints == RigidbodyConstraints.FreezeRotationY ||
+						_rigidbody.constraints == RigidbodyConstraints.FreezeRotationZ)
+					{
+						ACDebug.LogWarning ("Draggable " + gameObject.name + " has a Drag Mode of 'RotateOnly', but its rigidbody rotation is constrained. This may lead to inconsistent behaviour, and using a HingeTrack is advised instead.", gameObject);
+					}
+				}
 			}
 
 			if (GetComponent <SphereCollider>())
@@ -82,9 +97,29 @@ namespace AC
 				colliderRadius = GetComponent <SphereCollider>().radius * transform.localScale.x;
 			}
 
+			if (dragMode == DragMode.LockToTrack)
+			{
+				StartCoroutine (InitToTrack ());
+			}
+
+		}
+
+
+		private IEnumerator InitToTrack ()
+		{
 			if (track != null)
 			{
+				ChildTransformData[] childTransformData = GetChildTransforms ();
+
 				track.Connect (this);
+
+				if (retainOriginalTransform)
+				{
+					track.SnapToTrack (this, true);
+					SetChildTransforms (childTransformData);
+					yield return new WaitForEndOfFrame ();
+				}
+
 				if (setOnStart)
 				{
 					track.SetPositionAlong (trackValueOnStart, this);
@@ -94,6 +129,50 @@ namespace AC
 					track.SnapToTrack (this, true);
 				}
 				trackValue = track.GetDecimalAlong (this);
+			}
+		}
+
+
+		private class ChildTransformData
+		{
+
+			private Vector3 originalPosition;
+			private Quaternion originalRotation;
+
+
+			public ChildTransformData (Vector3 _originalPosition, Quaternion _originalRotation)
+			{
+				originalPosition = _originalPosition;
+				originalRotation = _originalRotation;
+			}
+
+
+			public void UpdateTransform (Transform transform)
+			{
+				transform.position = originalPosition;
+				transform.rotation = originalRotation;
+			}
+		}
+
+
+		private ChildTransformData[] GetChildTransforms ()
+		{
+			List<ChildTransformData> childTransformData = new List<ChildTransformData>();
+			for (int i=0; i<transform.childCount; i++)
+			{
+				Transform childTransform = transform.GetChild (i);
+				childTransformData.Add (new ChildTransformData (childTransform.position, childTransform.rotation));
+			}
+			return childTransformData.ToArray ();
+		}
+
+
+		private void SetChildTransforms (ChildTransformData[] childTransformData)
+		{
+			for (int i=0; i<transform.childCount; i++)
+			{
+				Transform childTransform = transform.GetChild (i);
+				childTransformData[i].UpdateTransform (childTransform);
 			}
 		}
 
@@ -382,6 +461,8 @@ namespace AC
 		 */
 		public void StopAutoMove (bool snapToTarget = true)
 		{
+			StopAllCoroutines ();
+
 			targetTrackSpeed = 0f;
 			if (snapToTarget)
 			{
@@ -490,7 +571,9 @@ namespace AC
 				{
 					StopAutoMove (false);
 				}
-			}    
+			}
+
+			BaseOnCollisionEnter (collision);
 		}
 
 	}

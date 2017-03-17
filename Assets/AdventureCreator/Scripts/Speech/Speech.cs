@@ -56,6 +56,7 @@ namespace AC
 		private float scrollAmount = 0f;
 		private float pauseEndTime = 0f;
 		private bool pauseIsIndefinite = false;
+		private AudioSource audioSource = null;
 
 		// Rich text
 		private int boldTagIndex = -1;
@@ -218,7 +219,7 @@ namespace AC
 
 				if (clipObj)
 				{
-					AudioSource audioSource = null;
+					audioSource = null;
 
 					if (_speaker != null)
 					{
@@ -233,29 +234,26 @@ namespace AC
 						if (_speaker.speechAudioSource)
 						{
 							audioSource = _speaker.speechAudioSource;
-
-							if (_speaker.speechAudioSource.GetComponent <Sound>())
-							{
-								_speaker.speechAudioSource.GetComponent <Sound>().SetVolume (Options.optionsData.speechVolume);
-							}
-							else
-							{
-								_speaker.speechAudioSource.volume = Options.optionsData.speechVolume;
-							}
+							_speaker.SetSpeechVolume (Options.optionsData.speechVolume);
 						}
 						else
 						{
 							ACDebug.LogWarning (_speaker.name + " has no audio source component!");
 						}
 					}
-					else if (KickStarter.player && KickStarter.player.speechAudioSource)
+					/*else if (KickStarter.player && KickStarter.player.speechAudioSource)
 					{
-						KickStarter.player.speechAudioSource.volume = Options.optionsData.speechVolume;
+						KickStarter.player.SetSpeechVolume (Options.optionsData.speechVolume);
 						audioSource = KickStarter.player.speechAudioSource;
-					}
+					}*/
 					else
 					{
-						audioSource = KickStarter.dialog.GetDefaultAudioSource ();
+						audioSource = KickStarter.dialog.GetNarratorAudioSource ();
+
+						if (audioSource == null)
+						{
+							ACDebug.LogWarning ("Cannot play audio for speech line '" + _message + "' as there is no AudioSource - assign a new 'Default Sound' in the Scene Manager.");
+						}
 					}
 					
 					if (audioSource != null)
@@ -354,7 +352,8 @@ namespace AC
 				{
 					if (!pauseGap)
 					{
-						scrollAmount += KickStarter.speechManager.textScrollSpeed / 100f / log.fullText.Length;
+						//scrollAmount += KickStarter.speechManager.textScrollSpeed / 100f / log.fullText.Length;
+						scrollAmount += KickStarter.speechManager.textScrollSpeed * Time.fixedDeltaTime / 2f / log.fullText.Length;
 
 						if (scrollAmount >= 1f) // was >
 						{
@@ -489,6 +488,8 @@ namespace AC
 				speaker.StopSpeaking ();
 			}
 
+			EndSpeechAudio ();
+
 			if (!forceOff && gapIndex >= 0 && gapIndex < speechGaps.Count)
 			{
 				gapIndex ++;
@@ -508,12 +509,17 @@ namespace AC
 				return false;
 			}
 
-			if (KickStarter.playerInput.GetMouseState () == MouseState.SingleClick ||
-			    KickStarter.playerInput.GetMouseState () == MouseState.RightClick ||
-			    KickStarter.playerInput.InputGetButtonDown ("SkipSpeech"))
+			if (KickStarter.speechManager.canSkipWithMouseClicks && (KickStarter.playerInput.GetMouseState () == MouseState.SingleClick ||
+			    													 KickStarter.playerInput.GetMouseState () == MouseState.RightClick))
 			{
 				return true;
 			}
+
+			if (KickStarter.playerInput.InputGetButtonDown ("SkipSpeech"))
+			{
+				return true;
+			}
+
 			return false;
 		}
 
@@ -789,6 +795,18 @@ namespace AC
 				{
 					speaker.speechAudioSource.Stop ();
 				}
+			}
+		}
+
+
+		/**
+		 * <summary>Ends speech audio, regardless of conditions.</summary>
+		 */
+		public void EndSpeechAudio ()
+		{
+			if (audioSource != null)
+			{
+				audioSource.Stop ();
 			}
 		}
 

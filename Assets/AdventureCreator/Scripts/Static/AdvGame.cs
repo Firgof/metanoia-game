@@ -55,19 +55,18 @@ namespace AC
 			if (audioMixerGroup != null && KickStarter.settingsManager.volumeControl == VolumeControl.AudioMixerGroups)
 			{
 				float attenuation = ((2f * volume) - (volume * volume) - 1f) * 80f;
-
 				audioMixerGroup.audioMixer.SetFloat (parameter, attenuation);
 			}
 		}
 		#endif
 
+
 		/**
 		 * <summary>Sets the 'Output Audio Mixer Group' of an Audio Source, based on its sound type (Unity 5 only).</summary>
 		 * <param name = "audioSource">The Audio Source component to affect</param>
 		 * <param name = "soundType">The sound type that controls the volume</param>
-		 * <param name = "isSpeech">True if the Audio Source is used to play speech</param>
 		 */
-		public static void AssignMixerGroup (AudioSource audioSource, SoundType soundType, bool isSpeech = false)
+		public static void AssignMixerGroup (AudioSource audioSource, SoundType soundType)
 		{
 			#if UNITY_5
 			if (audioSource != null && KickStarter.settingsManager.volumeControl == VolumeControl.AudioMixerGroups)

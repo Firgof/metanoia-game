@@ -233,7 +233,7 @@ namespace AC
 					EditorGUILayout.EndHorizontal ();
 				}
 				EditorGUILayout.BeginHorizontal ();
-				KickStarter.sceneSettings.defaultSound = (Sound) CustomGUILayout.ObjectField <Sound> ("Default Sound prefab:", KickStarter.sceneSettings.defaultSound, true, "AC.KickStarter.sceneSettings.defaultSound");
+				KickStarter.sceneSettings.defaultSound = (Sound) CustomGUILayout.ObjectField <Sound> ("Default Sound:", KickStarter.sceneSettings.defaultSound, true, "AC.KickStarter.sceneSettings.defaultSound");
 				if (KickStarter.sceneSettings.defaultSound == null)
 				{
 					if (GUILayout.Button ("Create", GUILayout.MaxWidth (60f)))
@@ -919,13 +919,13 @@ namespace AC
 						scale.z = Mathf.Max (scale.z, 0.01f);
 						newOb.transform.localScale = scale;
 					}
-					
+
 					Selection.activeGameObject = newOb;
 					GetPrefabsInScene ();
 				}
 
 				GUILayout.EndHorizontal ();
-				
+
 				if (CanWrapHotspot ())
 				{
 					positionHotspotOverMesh = EditorGUILayout.ToggleLeft ("Position over selected mesh?", positionHotspotOverMesh);

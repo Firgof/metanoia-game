@@ -70,6 +70,10 @@ namespace AC
 			{
 				if (textureAssets == null)
 				{
+					textureAssets = Resources.LoadAll ("SaveableData/Textures", typeof (T));
+				}
+				if (textureAssets == null || textureAssets.Length == 0)
+				{
 					textureAssets = Resources.LoadAll ("", typeof (T));
 				}
 				assetFiles = textureAssets;
@@ -77,6 +81,10 @@ namespace AC
 			else if (originalFile is AudioClip)
 			{
 				if (audioAssets == null)
+				{
+					audioAssets = Resources.LoadAll ("SaveableData/Audio", typeof (T));
+				}
+				if (audioAssets == null || audioAssets.Length == 0)
 				{
 					audioAssets = Resources.LoadAll ("", typeof (T));
 				}
@@ -86,6 +94,10 @@ namespace AC
 			{
 				if (animationAssets == null)
 				{
+					animationAssets = Resources.LoadAll ("SaveableData/Animations", typeof (T));
+				}
+				if (animationAssets == null || animationAssets.Length == 0)
+				{
 					animationAssets = Resources.LoadAll ("", typeof (T));
 				}
 				assetFiles = animationAssets;
@@ -94,6 +106,10 @@ namespace AC
 			{
 				if (materialAssets == null)
 				{
+					materialAssets = Resources.LoadAll ("SaveableData/Materials", typeof (T));
+				}
+				if (materialAssets == null || materialAssets.Length == 0)
+				{
 					materialAssets = Resources.LoadAll ("", typeof (T));
 				}
 				assetFiles = materialAssets;
@@ -101,6 +117,10 @@ namespace AC
 			else if (originalFile is ActionListAsset)
 			{
 				if (actionListAssets == null)
+				{
+					actionListAssets = Resources.LoadAll ("SaveableData/ActionLists", typeof (T));
+				}
+				if (actionListAssets == null || actionListAssets.Length == 0)
 				{
 					actionListAssets = Resources.LoadAll ("", typeof (T));
 				}

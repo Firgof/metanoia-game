@@ -34,6 +34,21 @@ namespace AC
 		}
 
 
+		private void Update ()
+		{
+			if (menuElement)
+			{
+				if (KickStarter.playerInput.InputGetButtonDown ("InteractionB"))
+				{
+					if (KickStarter.playerMenus.IsEventSystemSelectingObject (gameObject))
+					{
+						menuElement.ProcessClick (menu, slot, MouseState.RightClick);
+					}
+				}
+			}
+		}
+
+
 		public void OnPointerClick (PointerEventData eventData)
 		{
 			if (menuElement)

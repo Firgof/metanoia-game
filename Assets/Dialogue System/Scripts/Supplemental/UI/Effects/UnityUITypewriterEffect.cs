@@ -34,24 +34,18 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("Optional audio clip to play with each character.")]
         public AudioClip audioClip = null;
 
-		/// <summary>
-		/// The audio source through which to play the clip. If unassigned, will look for an
+        /// <summary>
+        /// If specified, randomly use these clips or the main Audio Clip.
+        /// </summary>
+        [Tooltip("If specified, randomly use these clips or the main Audio Clip.")]
+        public AudioClip[] alternateAudioClips = new AudioClip[0];
+
+        /// <summary>
+        /// The audio source through which to play the clip. If unassigned, will look for an
         /// audio source on this GameObject.
         /// </summary>
         [Tooltip("Optional audio source through which to play the clip.")]
         public AudioSource audioSource = null;
-
-		/// <summary>
-		/// The amount of pitch variance per character typed.
-		/// </summary>
-		[Tooltip("Varies the pitch of the sound by this much in each character.")]
-		public float audioPitch = 0.0f;
-
-		/// <summary>
-		/// Cancels playing the sound if one is playing by the end of this type writing.
-		/// </summary>
-		[Tooltip("Varies the pitch of the sound by this much in each character.")]
-		public bool audioStopOnFinish = false;
 
         /// <summary>
         /// If audio clip is still playing from previous character, stop and restart it when typing next character.
@@ -307,11 +301,6 @@ namespace PixelCrushers.DialogueSystem
                                     break;
                             }
                             isCodeNext = (tokens.Count > 0) && (tokens[0].tokenType != TokenType.Character);
-							//TODO: Break audio play when characters typed reaches goal
-							if (charactersTyped == goal-1){
-								audioSource.Stop();
-								Debug.Log("Stopping playing sound on typewriter script");
-							}
                         }
                     }
                     control.text = GetCurrentText(current, openTokenTypes, tokens);
@@ -334,18 +323,25 @@ namespace PixelCrushers.DialogueSystem
         private void PlayCharacterAudio()
         {
             if (audioClip == null || audioSource == null) return;
+            AudioClip randomClip = null;
+            if (alternateAudioClips != null && alternateAudioClips.Length > 0)
+            {
+                var randomIndex = UnityEngine.Random.Range(0, alternateAudioClips.Length + 1);
+                randomClip = (randomIndex < alternateAudioClips.Length) ? alternateAudioClips[randomIndex] : audioClip;                
+            }
             if (interruptAudioClip)
             {
                 if (audioSource.isPlaying) audioSource.Stop();
-				audioSource.pitch = 1+(Random.value*(Random.Range (-1,1)*audioPitch));
+                if (randomClip != null) audioSource.clip = randomClip;
                 audioSource.Play();
             }
             else
             {
-                if (!audioSource.isPlaying){
-					audioSource.pitch = 1+(Random.value*(Random.Range (-1,1)*audioPitch));
-					audioSource.Play();
-				}
+                if (!audioSource.isPlaying)
+                {
+                    if (randomClip != null) audioSource.clip = randomClip;
+                    audioSource.Play();
+                }
             }
         }
 

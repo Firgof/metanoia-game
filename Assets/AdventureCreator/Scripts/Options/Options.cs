@@ -1,3 +1,4 @@
+
 /*
  *
  *	Adventure Creator
@@ -158,28 +159,28 @@ namespace AC
 
 		/**
 		 * <summary>Gets the options values associated with a specific profile.</summary>
-		 * <param name = "ID">A unique identifier for the profile to save to</param>
+		 * <param name = "profileID">A unique identifier for the profile to save to</param>
 		 * <param name = "showLog">If True, the details of this save will be printed in the Console window</param>
 		 * <param name = "doSave">If True, and if the profile had no OptionsData to read, then new values will be saved to it</param>
 		 * <returns>An instance of OptionsData containing the profile's options</returns>
 		 */
-		public static OptionsData LoadPrefsFromID (int ID, bool showLog = false, bool doSave = true)
+		public static OptionsData LoadPrefsFromID (int profileID, bool showLog = false, bool doSave = true)
 		{
-			if (PlayerPrefs.HasKey (GetPrefKeyName (ID)))
+			if (DoesProfileIDExist (profileID))
 			{
-				string optionsSerialized = PlayerPrefs.GetString (GetPrefKeyName (ID));
+				string optionsSerialized = PlayerPrefs.GetString (GetPrefKeyName (profileID));
 				if (optionsSerialized != null && optionsSerialized.Length > 0)
 				{
 					if (showLog)
 					{
-						ACDebug.Log ("PlayerPrefs Key '" + GetPrefKeyName (ID) + "' loaded");
+						ACDebug.Log ("PlayerPrefs Key '" + GetPrefKeyName (profileID) + "' loaded");
 					}
 					return Serializer.DeserializeOptionsData (optionsSerialized);
 				}
 			}
 			
 			// No data exists, so create new
-			OptionsData _optionsData = new OptionsData (KickStarter.settingsManager.defaultLanguage, KickStarter.settingsManager.defaultShowSubtitles, KickStarter.settingsManager.defaultSfxVolume, KickStarter.settingsManager.defaultMusicVolume, KickStarter.settingsManager.defaultSpeechVolume, ID);
+			OptionsData _optionsData = new OptionsData (KickStarter.settingsManager.defaultLanguage, KickStarter.settingsManager.defaultShowSubtitles, KickStarter.settingsManager.defaultSfxVolume, KickStarter.settingsManager.defaultMusicVolume, KickStarter.settingsManager.defaultSpeechVolume, profileID);
 			if (doSave)
 			{
 				optionsData = _optionsData;
@@ -196,15 +197,15 @@ namespace AC
 		 * <param name = "includeActive">If True, then the MenuProfilesList element that contains the profile to switch to also lists the active profile</param>
 		 * <returns>True if the switch was successful</returns>
 		 */
-		public bool SwitchProfileIfExists (int index, bool includeActive)
+		public bool SwitchProfile (int index, bool includeActive)
 		{
 			if (KickStarter.settingsManager.useProfiles)
 			{
-				int ID = ProfileIndexToID (index, includeActive);
-				if (PlayerPrefs.HasKey (GetPrefKeyName (ID)))
+				int profileID = ProfileIndexToID (index, includeActive);
+
+				if (DoesProfileIDExist (profileID))
 				{
-					SwitchProfile (ID);
-					return true;
+					return SwitchProfileID (profileID);
 				}
 				ACDebug.Log ("Profile switch failed - " + index + " doesn't exist");
 			}
@@ -222,7 +223,7 @@ namespace AC
 		{
 			for (int i=0; i<maxProfiles; i++)
 			{
-				if (PlayerPrefs.HasKey (GetPrefKeyName (i)))
+				if (DoesProfileIDExist (i))
 				{
 					if (!includeActive && i == GetActiveProfileID ())
 					{}
@@ -269,7 +270,7 @@ namespace AC
 		{
 			for (int i=0; i<maxProfiles; i++)
 			{
-				if (!PlayerPrefs.HasKey (GetPrefKeyName (i)))
+				if (!DoesProfileIDExist (i))
 				{
 					return i;
 				}
@@ -281,8 +282,9 @@ namespace AC
 		/**
 		 * <summary>Creates a new profile (instance of OptionsData).</summary>
 		 * <param name = "_label">The name of the new profile.</param>
+		 * <returns>The ID number of the new profile</returns>
 		 */
-		public void CreateProfile (string _label = "")
+		public int CreateProfile (string _label = "")
 		{
 			int newProfileID = FindFirstEmptyProfileID ();
 			
@@ -301,13 +303,15 @@ namespace AC
 				KickStarter.saveSystem.GatherSaveFiles ();
 				KickStarter.playerMenus.RecalculateAll ();
 			}
+
+			return newProfileID;
 		}
 
 
 		/**
-		 * <summary>Renames a profile.</summary>
+		 * <summary>Renames a profile by referencing its entry in a MenuProfilesList element.</summary>
 		 * <param name = "newProfileLabel">The new label for the profile</param>
-		 * <param name = "profileIndex">The index in the MenuProfilesList element that represents the profile to delete. If it is set to its default, -2, the active profile will be deleted</param>
+		 * <param name = "profileIndex">The index in the MenuProfilesList element that represents the profile to rename. If it is set to its default, -2, the active profile will be renamed</param>
 		 * <param name = "includeActive">If True, then the MenuProfilesList element that the profile was selected from also displays the active profile</param>
 		 */
 		public void RenameProfile (string newProfileLabel, int profileIndex = -2, bool includeActive = true)
@@ -328,16 +332,37 @@ namespace AC
 				profileID = Options.GetActiveProfileID ();
 			}
 
+			RenameProfileID (newProfileLabel, profileID);
+		}
+
+
+		/**
+		 * <summary>Renames a profile ID.</summary>
+		 * <param name = "newProfileLabel">The new label for the profile</param>
+		 * <param name = "profileID">The profile ID to rename</param>
+		 */
+		public void RenameProfileID (string newProfileLabel, int profileID)
+		{
+			if (!KickStarter.settingsManager.useProfiles || newProfileLabel.Length == 0)
+			{
+				return;
+			}
+			
 			if (profileID == GetActiveProfileID ())
 			{
 				optionsData.label = newProfileLabel;
 				SavePrefs ();
 			}
-			else if (PlayerPrefs.HasKey (GetPrefKeyName (profileID)))
+			else if (DoesProfileIDExist (profileID))
 			{
 				OptionsData tempOptionsData = LoadPrefsFromID (profileID, false);
 				tempOptionsData.label = newProfileLabel;
 				SavePrefsToID (profileID, tempOptionsData, true);
+			}
+			else
+			{
+				ACDebug.LogWarning ("Cannot rename profile " + profileID + " as it does not exist!");
+				return;
 			}
 
 			KickStarter.playerMenus.RecalculateAll ();
@@ -346,7 +371,7 @@ namespace AC
 
 		/**
 		 * <summary>Gets the name of a specific profile.</summary>
-		 * <param name = "index">The index in the MenuProfilesList element that represents the profile to delete.</param>
+		 * <param name = "index">The index in the MenuProfilesList element that represents the profile to get the name of.</param>
 		 * <param name = "includeActive">If True, then the MenuProfilesList element that the profile was selected from also displays the active profile</param>
 		 * <returns>The display name of the profile</returns>
 		 */
@@ -361,11 +386,30 @@ namespace AC
 				return Options.optionsData.label;
 			}
 
-			int ID = KickStarter.options.ProfileIndexToID (index, includeActive);
+			int profileID = KickStarter.options.ProfileIndexToID (index, includeActive);
+			return GetProfileIDName (profileID);
+		}
 
-			if (PlayerPrefs.HasKey (GetPrefKeyName (ID)))
+
+		/**
+		 * <summary>Gets the name of a specific profile ID.</summary>
+		 * <param name = "profileID">The profile ID to get the name of</param>
+		 * <returns>The display name of the profile</returns>
+		 */
+		public string GetProfileIDName (int profileID)
+		{
+			if (!KickStarter.settingsManager.useProfiles)
 			{
-				OptionsData tempOptionsData = LoadPrefsFromID (ID, false);
+				if (Options.optionsData == null)
+				{
+					LoadPrefs ();
+				}
+				return Options.optionsData.label;
+			}
+
+			if (DoesProfileIDExist (profileID))
+			{
+				OptionsData tempOptionsData = LoadPrefsFromID (profileID, false);
 				return tempOptionsData.label;
 			}
 			else
@@ -373,6 +417,7 @@ namespace AC
 				return "";
 			}
 		}
+
 		
 
 		/**
@@ -386,7 +431,7 @@ namespace AC
 				int count = 0;
 				for (int i=0; i<maxProfiles; i++)
 				{
-					if (PlayerPrefs.HasKey (GetPrefKeyName (i)))
+					if (DoesProfileIDExist (i))
 					{
 						count ++;
 					}
@@ -417,35 +462,75 @@ namespace AC
 			{
 				for (int i=0; i<maxProfiles; i++)
 				{
-					if (PlayerPrefs.HasKey (GetPrefKeyName (i)))
+					if (DoesProfileIDExist (i))
 					{
-						SwitchProfile (i);
+						SwitchProfileID (i);
 						return;
 					}
 				}
 				
 				// No other profile found, create new
-				SwitchProfile (0);
+				SwitchProfileID (0);
 			}
+		}
+
+
+		/**
+		 * <summary>Checks if a profile exists.</summary>
+		 * <param name = "index">The index in the MenuProfilesList element that represents the profile to search for.</param>
+		 * <param name = "includeActive">If True, then the MenuProfilesList element that the profile was selected from also displays the active profile</param>
+		 * <returns>True if the profile exists</returns>
+		 */
+		public bool DoesProfileExist (int index, bool includeActive = true)
+		{
+			if (index < 0) return false;
+
+			int profileID = KickStarter.options.ProfileIndexToID (index, includeActive);
+			return DoesProfileIDExist (profileID);
+		}
+
+
+		/**
+		 * <summary>Checks if a specific profile ID exists.</summary>
+		 * <param name = "profileID">The profile ID to check for</param>
+		 * <returns>True if the given profile ID exists</returns>
+		 */
+		public static bool DoesProfileIDExist (int profileID)
+		{
+			if (!KickStarter.settingsManager.useProfiles)
+			{
+				profileID = 0;
+			}
+
+			return PlayerPrefs.HasKey (GetPrefKeyName (profileID));
 		}
 		
 
 		/**
-		 * <summary>Switches to a specific profile.</summary>
-		 * <param name = "ID">The unique identifier of the profile to switch to</param>
+		 * <summary>Switches to a specific profile ID, provided that it exists.</summary>
+		 * <param name = "profileID">The unique identifier of the profile to switch to</param>
+		 * <returns>True if the switch was successful</returns>
 		 */
-		public static void SwitchProfile (int ID)
+		public static bool SwitchProfileID (int profileID)
 		{
-			SetActiveProfileID (ID);
+			if (!Options.DoesProfileIDExist (profileID))
+			{
+				ACDebug.LogWarning ("Cannot switch to profile ID " + profileID.ToString () + ", as it has not been created.");
+				return false;
+			}
+
+			SetActiveProfileID (profileID);
 			LoadPrefs ();
 
-			ACDebug.Log ("Switched to profile " + ID.ToString () + ": '" + optionsData.label + "'");
+			ACDebug.Log ("Switched to profile " + profileID.ToString () + ": '" + optionsData.label + "'");
 			
 			if (Application.isPlaying)
 			{
 				KickStarter.saveSystem.GatherSaveFiles ();
 				KickStarter.playerMenus.RecalculateAll ();
 			}
+
+			return true;
 		}
 		
 
@@ -506,7 +591,7 @@ namespace AC
 				return;
 			}
 
-			UpdateMixerVolumes ();
+			StartCoroutine (UpdateMixerVolumes ());
 
 			SetVolume (SoundType.Music);
 			SetVolume (SoundType.SFX);
@@ -514,8 +599,10 @@ namespace AC
 		}
 
 
-		private void UpdateMixerVolumes ()
+		private IEnumerator UpdateMixerVolumes ()
 		{
+			yield return null;
+
 			#if UNITY_5
 			if (KickStarter.settingsManager.volumeControl == VolumeControl.AudioMixerGroups)
 			{

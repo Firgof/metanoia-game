@@ -114,10 +114,10 @@ namespace AC
 
 		/**
 		 * <summary>Gets the property's value as a string.</summary>
-		 * <param name = "languageNumber">The index number of the game's current language</param>
+		 * <param name = "languageNumber">The index number of the game's current language (0 = original)</param>
 		 * <returns>The property's value as a string</returns>
 		 */
-		public string GetDisplayValue (int languageNumber)
+		public string GetDisplayValue (int languageNumber = 0)
 		{
 			if (type == VariableType.Integer)
 			{

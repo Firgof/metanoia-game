@@ -234,6 +234,26 @@ namespace AC
 				}
 			}
 		}
+
+
+		public override Vector3 GetPointNear (Vector3 point, float minDistance, float maxDistance)
+		{
+			Vector2 randomOffset = Random.insideUnitCircle * Random.Range (minDistance, maxDistance);
+			Vector2 randomPoint = (Vector2) point + randomOffset;
+
+			if (IsLineClear (point, randomPoint))
+			{
+				return randomPoint;
+			}
+
+			Vector2 intersectPoint = GetLineIntersect (randomPoint, point);
+			if (intersectPoint != Vector2.zero)
+			{
+				return intersectPoint;
+			}
+
+			return base.GetPointNear (point, minDistance, maxDistance);
+		}
 		
 		
 		private int[] buildSpanningTree (int source, int destination, float[,] weight)

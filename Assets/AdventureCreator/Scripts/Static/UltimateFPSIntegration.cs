@@ -59,11 +59,13 @@ namespace AC
 		public float turnSpeed = 60f;
 		/** If True, then weapons will be disabled */
 		public bool disableWeapons = false;
-		
+
 		private vp_FPCamera fpCamera;
 		private vp_FPController fpController;
 		private vp_FPInput fpInput;
 		private vp_FPPlayerEventHandler fpPlayerEventHandler;
+		private vp_SimpleHUD simpleHUD;
+		private vp_SimpleCrosshair simpleCrosshair;
 
 		private AudioListener _audioListener;
 		private Player player;
@@ -85,6 +87,8 @@ namespace AC
 			fpController = GetComponentInChildren <vp_FPController>();
 			fpInput = GetComponentInChildren <vp_FPInput>();
 			fpPlayerEventHandler = GetComponentInChildren <vp_FPPlayerEventHandler>();
+			simpleHUD = GetComponentInChildren <vp_SimpleHUD>();
+			simpleCrosshair = GetComponentInChildren <vp_SimpleCrosshair>();
 			_audioListener = GetComponentInChildren <AudioListener>();
 			
 			if (fpController == null)
@@ -202,17 +206,19 @@ namespace AC
 			}
 			else
 			{
-				SetWeaponState (KickStarter.playerInput.cursorIsLocked);
+				SetWeaponState (KickStarter.playerInput.IsCursorLocked ());
 			}
 
 			// Override the mouse completely if we've unlocked the cursor
 			if (KickStarter.stateHandler.gameState == GameState.Normal)
 			{
-				SetCursorState (!KickStarter.playerInput.cursorIsLocked);
+				SetCursorState (!KickStarter.playerInput.IsCursorLocked ());
+				SetHUDState (true);
 			}
 			else
 			{
 				SetCursorState (true);
+				SetHUDState (false);
 			}
 		}
 
@@ -370,6 +376,20 @@ namespace AC
 			if (fpInput)
 			{
 				fpInput.MouseCursorForced = state;
+			}
+		}
+
+
+		private void SetHUDState (bool state)
+		{
+			if (simpleHUD)
+			{
+				simpleHUD.ShowHUD = state;
+			}
+
+			if (simpleCrosshair)
+			{
+				simpleCrosshair.Hide = !state;
 			}
 		}
 		

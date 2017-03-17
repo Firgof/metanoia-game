@@ -39,15 +39,6 @@ namespace AC
 			EditorGUILayout.BeginVertical ("Button");
 			EditorGUILayout.LabelField ("Mecanim parameters:", EditorStyles.boldLabel);
 
-			if (AdvGame.GetReferences () && AdvGame.GetReferences ().settingsManager && AdvGame.GetReferences ().settingsManager.IsTopDown ())
-			{
-				character.spriteChild = (Transform) EditorGUILayout.ObjectField ("Animator child:", character.spriteChild, typeof (Transform), true);
-			}
-			else
-			{
-				character.spriteChild = null;
-			}
-
 			character.moveSpeedParameter = EditorGUILayout.TextField ("Move speed float:", character.moveSpeedParameter);
 			character.turnParameter = EditorGUILayout.TextField ("Turn float:", character.turnParameter);
 			character.talkParameter = EditorGUILayout.TextField ("Talk bool:", character.talkParameter);
@@ -80,6 +71,7 @@ namespace AC
 				character.headYawParameter = EditorGUILayout.TextField ("Head yaw float:", character.headYawParameter);
 				character.headPitchParameter = EditorGUILayout.TextField ("Head pitch float:", character.headPitchParameter);
 			}
+			character.headTurnSpeed = EditorGUILayout.Slider ("Head turn speed:", character.headTurnSpeed, 0.1f, 20f);
 
 			character.verticalMovementParameter = EditorGUILayout.TextField ("Vertical movement float:", character.verticalMovementParameter);
 			if (character is Player)
@@ -98,6 +90,16 @@ namespace AC
 			EditorGUILayout.BeginVertical ("Button");
 			EditorGUILayout.LabelField ("Mecanim settings:", EditorStyles.boldLabel);
 
+			if (AdvGame.GetReferences () && AdvGame.GetReferences ().settingsManager && AdvGame.GetReferences ().settingsManager.IsTopDown ())
+			{
+				character.spriteChild = (Transform) EditorGUILayout.ObjectField ("Animator child:", character.spriteChild, typeof (Transform), true);
+			}
+			else
+			{
+				character.spriteChild = null;
+				character.customAnimator = (Animator) EditorGUILayout.ObjectField ("Animator (optional):", character.customAnimator, typeof (Animator), true);
+			}
+
 			character.headLayer = EditorGUILayout.IntField ("Head layer #:", character.headLayer);
 			character.mouthLayer = EditorGUILayout.IntField ("Mouth layer #:", character.mouthLayer);
 
@@ -111,6 +113,10 @@ namespace AC
 				#endif
 			}
 
+			if (!Application.isPlaying)
+			{
+				character.ResetAnimator ();
+			}
 			Animator charAnimator = character.GetAnimator ();
 			if (charAnimator != null && charAnimator.applyRootMotion)
 			{

@@ -228,6 +228,8 @@ namespace AC
 		public float followDistanceMax = 0f;
 		/** If True, the NPC will face their follow target when idle */
 		public bool followFaceWhenIdle = false;
+		/** If True, the NPC will stand a random direction from their target */
+		public bool followRandomDirection = false;
 
 		/** True if the NPC's head is pointed towards a target */
 		public bool isHeadTurning = false;

@@ -2914,6 +2914,7 @@ MonoBehaviour:
   abandonQuestState: 1
   pauseWhileOpen: 1
   unlockCursorWhileOpen: 1
+  useGroups: 0
   guiRoot: {fileID: 1212956807}
   scrollView: {fileID: 1599978166}
   activeButton: {fileID: 1024688754}
@@ -2923,6 +2924,7 @@ MonoBehaviour:
     questTitleLabel: {fileID: 113883638}
     ok: {fileID: 2033811587}
     cancel: {fileID: 1407753678}
+  groupHeadingGuiStyleName: 
   questHeadingGuiStyleName: Alternate Button
   questHeadingOpenGuiStyleName: 
   questBodyGuiStyleName: 
@@ -3760,7 +3762,7 @@ Transform:
   - {fileID: 1402603298}
   - {fileID: 761502729}
   m_Father: {fileID: 1932205272}
-  m_RootOrder: 2
+  m_RootOrder: 3
 --- !u!111 &741849450
 Animation:
   m_ObjectHideFlags: 0
@@ -3863,6 +3865,7 @@ MonoBehaviour:
     acceptedGameObjects: []
     luaWizardIndex: -1
   skipIfNoValidEntries: 0
+  exclusive: 0
   conversant: {fileID: 0}
   useConversationTitlePicker: 1
   selectedDatabase: {fileID: 0}
@@ -5577,7 +5580,7 @@ Transform:
   - {fileID: 1331120026}
   - {fileID: 702317453}
   m_Father: {fileID: 1932205272}
-  m_RootOrder: 1
+  m_RootOrder: 2
 --- !u!111 &1026855502
 Animation:
   m_ObjectHideFlags: 0
@@ -5727,6 +5730,12 @@ MonoBehaviour:
   defaultUseMessage: (spacebar to interact)
   broadcastToChildren: 1
   actorTransform: {fileID: 0}
+  tooFarMessage: 
+  tooFarEvent:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
   debug: 0
 --- !u!114 &1026855506
 MonoBehaviour:
@@ -10291,6 +10300,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialDatabase: {fileID: 11400000, guid: 3b2824f1ac4c75e43b5f16d316db4021, type: 2}
   displaySettings:
+    conversationOverrideSettings:
+      useOverrides: 0
+      overrideSubtitleSettings: 0
+      showNPCSubtitlesDuringLine: 1
+      showNPCSubtitlesWithResponses: 1
+      showPCSubtitlesDuringLine: 0
+      subtitleCharsPerSecond: 30
+      minSubtitleSeconds: 2
+      continueButton: 0
+      overrideSequenceSettings: 0
+      defaultSequence: 
+      defaultPlayerSequence: 
+      defaultResponseMenuSequence: 
+      overrideInputSettings: 0
+      alwaysForceResponseMenu: 1
+      responseTimeout: 0
     dialogueUI: {fileID: 100030, guid: 01d7b387a6e81654ab503f8d2dc03014, type: 2}
     localizationSettings:
       language: 
@@ -10312,6 +10337,7 @@ MonoBehaviour:
       cameraAngles: {fileID: 0}
       defaultSequence: Camera(Closeup); required Camera(Closeup,listener)@{{end}}
       defaultPlayerSequence: 
+      defaultResponseMenuSequence: 
       entrytagFormat: 0
       disableInternalSequencerCommands: 0
     inputSettings:
@@ -10332,6 +10358,14 @@ MonoBehaviour:
     alertSettings:
       allowAlertsDuringConversations: 0
       alertCheckFrequency: 0
+  persistentDataSettings:
+    recordPersistentDataOn: 0
+    includeActorData: 1
+    includeAllItemData: 0
+    includeStatusAndRelationshipData: 1
+    asyncGameObjectBatchSize: 1000
+    asyncDialogueEntryBatchSize: 100
+  allowSimultaneousConversations: 0
   includeSimStatus: 0
   preloadResources: 0
   dontDestroyOnLoad: 1
@@ -10399,6 +10433,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7a2840b06cde3b479416623b4d15788, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  menuKey: 27
   guiSkin: {fileID: 11400000, guid: 8674f6c2c39b03e46827dcac4369d13d, type: 2}
   questLogWindow: {fileID: 602920763}
 --- !u!1 &1706390994
@@ -10607,7 +10642,7 @@ Transform:
   - {fileID: 1917670720}
   - {fileID: 1615782084}
   m_Father: {fileID: 1932205272}
-  m_RootOrder: 3
+  m_RootOrder: 4
 --- !u!111 &1724486080
 Animation:
   m_ObjectHideFlags: 0
@@ -10725,6 +10760,7 @@ MonoBehaviour:
     acceptedGameObjects: []
     luaWizardIndex: -1
   skipIfNoValidEntries: 0
+  exclusive: 0
   conversant: {fileID: 0}
   useConversationTitlePicker: 1
   selectedDatabase: {fileID: 11400000, guid: 3b2824f1ac4c75e43b5f16d316db4021, type: 2}
@@ -11519,6 +11555,33 @@ Transform:
   - {fileID: 1291388115}
   m_Father: {fileID: 1063020839}
   m_RootOrder: 0
+--- !u!1 &1848578552
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 1848578553}
+  m_Layer: 0
+  m_Name: Spawnpoint From Server Room
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1848578553
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1848578552}
+  m_LocalRotation: {x: 0, y: .991213083, z: 0, w: .13227503}
+  m_LocalPosition: {x: 1.61040449, y: 0, z: -1.09013963}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1932205272}
+  m_RootOrder: 1
 --- !u!1 &1850729760
 GameObject:
   m_ObjectHideFlags: 0
@@ -11619,7 +11682,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   once: 0
-  sequence: LoadLevel(Server Room)
+  sequence: LoadLevel(Server Room, Spawnpoint From Airlock)
   speaker: {fileID: 0}
   listener: {fileID: 0}
   condition:
@@ -12231,6 +12294,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1850729761}
+  - {fileID: 1848578553}
   - {fileID: 1026855501}
   - {fileID: 741849449}
   - {fileID: 1724486079}

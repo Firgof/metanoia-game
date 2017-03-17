@@ -44,8 +44,10 @@ namespace AC
 		/** If True, the textScrollClip audio will be played with every character addition to the subtitle text, as opposed to waiting for the previous audio to end */
 		public bool playScrollAudioEveryCharacter = true;
 
-		/** If True, then speech text will remain on the screen until the player clicks */
+		/** If True, then speech text will remain on the screen until the player skips it */
 		public bool displayForever = false;
+		/** If True, and subtitles can be skipped, then skipping can be achieved with mouse-clicks, as well as by invoking the SkipSpeech input */
+		public bool canSkipWithMouseClicks = true;
 		/** The minimum time, in seconds, that a speech line will be displayed (unless an AudioClip is setting it's length) */
 		public float minimumDisplayTime = 1f;
 		/** The time that speech text will be displayed, divided by the number of characters in the text, if displayForever = False */
@@ -192,8 +194,13 @@ namespace AC
 						{
 							endScrollBeforeSkip = CustomGUILayout.ToggleLeft ("Skipping subtitles first displays currently-scrolling text?", endScrollBeforeSkip, "AC.KickStarter.speechManager.endScrollBeforeSkip");
 						}
-						skipThresholdTime = CustomGUILayout.FloatField ("Time before can skip (s):", skipThresholdTime, "AC.KickStarter.speechManager.skipThresholdTime");
 					}
+				}
+
+				if (displayForever || allowSpeechSkipping)
+				{
+					canSkipWithMouseClicks = CustomGUILayout.ToggleLeft ("Can skip speech with mouse clicks?", canSkipWithMouseClicks, "AC.KickStarter.speechManager.canSkipWithMouseClicks");
+					skipThresholdTime = CustomGUILayout.FloatField ("Time before can skip (s):", skipThresholdTime, "AC.KickStarter.speechManager.skipThresholdTime");
 				}
 				
 				keepTextInBuffer = CustomGUILayout.ToggleLeft ("Retain subtitle text buffer once line has ended?", keepTextInBuffer, "AC.KickStarter.speechManager.keepTextInBuffer");
@@ -232,6 +239,14 @@ namespace AC
 				forceSubtitles = CustomGUILayout.ToggleLeft ("Force subtitles to display when no speech audio is found?", forceSubtitles, "AC.KickStarter.speechManager.forceSubtitles");
 				searchAudioFiles = CustomGUILayout.ToggleLeft ("Auto-play speech audio files?", searchAudioFiles, "AC.KickStarter.speechManager.searchAudioFiles");
 				autoNameSpeechFiles = CustomGUILayout.ToggleLeft ("Auto-name speech audio files?", autoNameSpeechFiles, "AC.KickStarter.speechManager.autoNameSpeechFiles");
+
+				#if UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL
+				if (!autoNameSpeechFiles)
+				{
+					EditorGUILayout.HelpBox ("Manually-assigning speech files takes memory - consider auto-naming on this platform.", MessageType.Warning);
+				}
+				#endif
+
 				translateAudio = CustomGUILayout.ToggleLeft ("Speech audio can be translated?", translateAudio, "AC.KickStarter.speechManager.translateAudio");
 				if (translateAudio)
 				{
@@ -242,6 +257,7 @@ namespace AC
 				{
 					placeAudioInSubfolders = CustomGUILayout.ToggleLeft ("Place audio files in speaker subfolders?", placeAudioInSubfolders, "AC.KickStarter.speechManager.placeAudioInSubfolders");
 				}
+
 				sfxDucking = CustomGUILayout.Slider ("SFX reduction during:", sfxDucking, 0f, 1f, "AC.KickStarter.speechManager.sfxDucking");
 				musicDucking = CustomGUILayout.Slider ("Music reduction during:", musicDucking, 0f, 1f, "AC.KickStarter.speechManager.musicDucking");
 				relegateBackgroundSpeechAudio = CustomGUILayout.ToggleLeft ("End background speech audio if non-background plays?", relegateBackgroundSpeechAudio, "AC.KickStarter.speechManager.relegateBackgroundSpeechAudio");
@@ -381,6 +397,49 @@ namespace AC
 			}
 			return sceneNames.ToArray ();
 		}
+
+
+		private Dictionary<int, SpeechLine> displayedLinesDictionary = new Dictionary<int, SpeechLine>();
+		private void CacheDisplayLines ()
+		{
+			List<SpeechLine> sortedLines = new List<SpeechLine>();
+			foreach (SpeechLine line in lines)
+			{
+				sortedLines.Add (new SpeechLine (line));
+			}
+
+			if (gameTextSorting == GameTextSorting.ByID)
+			{
+				sortedLines.Sort (delegate (SpeechLine a, SpeechLine b) {return a.lineID.CompareTo (b.lineID);});
+			}
+			else if (gameTextSorting == GameTextSorting.ByDescription)
+			{
+				sortedLines.Sort (delegate (SpeechLine a, SpeechLine b) {return a.description.CompareTo (b.description);});
+			}
+
+			string selectedScene = sceneNames[sceneFilter] + ".unity";
+
+			displayedLinesDictionary.Clear ();
+			foreach (SpeechLine line in sortedLines)
+			{
+				if (line.textType == typeFilter && line.Matches (textFilter, filterSpeechLine))
+				{
+					string scenePlusExtension = (line.scene != "") ? (line.scene + ".unity") : "";
+					
+					if ((line.scene == "" && sceneFilter == 0)
+					    || sceneFilter == 1
+					    || (line.scene != "" && sceneFilter > 1 && line.scene.EndsWith (selectedScene))
+					    || (line.scene != "" && sceneFilter > 1 && scenePlusExtension.EndsWith (selectedScene)))
+					{
+						if (tagFilter == -1
+						|| (tagFilter < speechTags.Count && line.tagID == speechTags[tagFilter].ID))
+						{
+							displayedLinesDictionary.Add (line.lineID, line);
+						}
+					}
+				}
+			}
+		}
 		
 		
 		private void ListLines ()
@@ -448,51 +507,29 @@ namespace AC
 				return;
 			}
 
-			List<SpeechLine> sortedLines = new List<SpeechLine>();
-			foreach (SpeechLine line in lines)
+			bool doCache = GUI.changed;
+
+			if (doCache || (displayedLinesDictionary.Count == 0 && lines.Count > 0))
 			{
-				sortedLines.Add (new SpeechLine (line));
+				CacheDisplayLines ();
 			}
 
-			if (gameTextSorting == GameTextSorting.ByID)
+			foreach (KeyValuePair<int, SpeechLine> displayedLine in displayedLinesDictionary)
 			{
-				sortedLines.Sort (delegate (SpeechLine a, SpeechLine b) {return a.lineID.CompareTo (b.lineID);});
-			}
-			else if (gameTextSorting == GameTextSorting.ByDescription)
-			{
-				sortedLines.Sort (delegate (SpeechLine a, SpeechLine b) {return a.description.CompareTo (b.description);});
+				displayedLine.Value.ShowGUI ();
 			}
 
-			string selectedScene = sceneNames[sceneFilter] + ".unity";
-			foreach (SpeechLine line in sortedLines)
+			doCache = GUI.changed;
+
+			if (doCache)
 			{
-				if (line.textType == typeFilter && line.Matches (textFilter, filterSpeechLine))
+				// Place back
+				for (int j=0; j<lines.Count; j++)
 				{
-					string scenePlusExtension = (line.scene != "") ? (line.scene + ".unity") : "";
-					
-					if ((line.scene == "" && sceneFilter == 0)
-					    || sceneFilter == 1
-					    || (line.scene != "" && sceneFilter > 1 && line.scene.EndsWith (selectedScene))
-					    || (line.scene != "" && sceneFilter > 1 && scenePlusExtension.EndsWith (selectedScene)))
+					SpeechLine displayedLine;
+					if (displayedLinesDictionary.TryGetValue (lines[j].lineID, out displayedLine))
 					{
-						if (tagFilter == -1
-						|| (tagFilter < speechTags.Count && line.tagID == speechTags[tagFilter].ID))
-						{
-							line.ShowGUI ();
-						}
-					}
-				}
-			}
-
-			// Place back
-			for (int j=0; j<lines.Count; j++)
-			{
-				for (int i=0; i<sortedLines.Count; i++)
-				{
-					if (lines[j].lineID == sortedLines[i].lineID)
-					{
-						lines[j] = new SpeechLine (sortedLines[i]);
-						sortedLines.RemoveAt (i);
+						lines[j] = new SpeechLine (displayedLine);
 					}
 				}
 			}
@@ -520,7 +557,7 @@ namespace AC
 				{
 					if (languages.Count > 1)
 					{
-						ignoreOriginalText = EditorGUILayout.ToggleLeft ("Prevent original language from being used?", ignoreOriginalText);
+						ignoreOriginalText = CustomGUILayout.ToggleLeft ("Prevent original language from being used?", ignoreOriginalText, "AC.KickStarter.speechManager.ignoreOriginalText");
 						if (!ignoreOriginalText)
 						{
 							languages[0] = EditorGUILayout.TextField ("Name of original language:", languages[0]);
@@ -1423,6 +1460,43 @@ namespace AC
 		}
 
 
+		private void ExtractDialogOption (ActionDialogOptionRename action, bool onlySeekNew, bool isInScene)
+		{
+			if (onlySeekNew && action.lineID == -1)
+			{
+				// Assign a new ID on creation
+				SpeechLine newLine;
+				if (isInScene)
+				{
+					newLine = new SpeechLine (GetEmptyID (), UnityVersionHandler.GetCurrentSceneName (), action.newLabel, languages.Count - 1, AC_TextType.DialogueOption);
+				}
+				else
+				{
+					newLine = new SpeechLine (GetEmptyID (), "", action.newLabel, languages.Count - 1, AC_TextType.DialogueOption);
+				}
+				action.lineID = newLine.lineID;
+				lines.Add (newLine);
+			}
+			
+			else if (!onlySeekNew && action.lineID > -1)
+			{
+				// Already has an ID, so don't replace
+				SpeechLine existingLine;
+				if (isInScene)
+				{
+					existingLine = new SpeechLine (action.lineID, UnityVersionHandler.GetCurrentSceneName (), action.newLabel, languages.Count - 1, AC_TextType.DialogueOption);
+				}
+				else
+				{
+					existingLine = new SpeechLine (action.lineID, "", action.newLabel, languages.Count - 1, AC_TextType.DialogueOption);
+				}
+				
+				int lineID = SmartAddLine (existingLine);
+				if (lineID >= 0) action.lineID = lineID;
+			}
+		}
+
+
 		private void GetLinesFromSettings (bool onlySeekNew)
 		{
 			SettingsManager settingsManager = AdvGame.GetReferences ().settingsManager;
@@ -1927,10 +2001,25 @@ namespace AC
 					ActionSpeech actionSpeech = (ActionSpeech) action;
 					actionSpeech.lineID = -1;
 				}
+				else if (action is ActionRename)
+				{
+					ActionRename actionRename = (ActionRename) action;
+					actionRename.lineID = -1;
+				}
+				else if (action is ActionCharRename)
+				{
+					ActionCharRename actionCharRename = (ActionCharRename) action;
+					actionCharRename.lineID = -1;
+				}
 				else if (action is ActionMenuState)
 				{
 					ActionMenuState actionMenuState = (ActionMenuState) action;
 					actionMenuState.lineID = -1;
+				}
+				else if (action is ActionDialogOptionRename)
+				{
+					ActionDialogOptionRename actionDialogOptionRename = (ActionDialogOptionRename) action;
+					actionDialogOptionRename.lineID = -1;
 				}
 			}
 			
@@ -2498,6 +2587,10 @@ namespace AC
 				else if (action is ActionMenuState)
 				{
 					ExtractJournalEntry (action as ActionMenuState, onlySeekNew, isInScene);
+				}
+				else if (action is ActionDialogOptionRename)
+				{
+					ExtractDialogOption (action as ActionDialogOptionRename, onlySeekNew, isInScene);
 				}
 			}
 		}

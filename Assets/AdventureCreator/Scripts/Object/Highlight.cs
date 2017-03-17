@@ -38,6 +38,8 @@ namespace AC
 		public float maxHighlight = 2f;
 		/** The fade time for the highlight transition effect */
 		public float fadeTime = 0.3f;
+		/** The length of time that a flash will hold for */
+		public float flashHoldTime = 0f;
 
 		/** If True, then custom events can be called when highlighting the object */
 		public bool callEvents;
@@ -135,6 +137,12 @@ namespace AC
 		 */
 		public void HighlightOn ()
 		{
+			if (highlightState == HighlightState.On ||
+			   (highlightState == HighlightState.Normal && direction == 1))
+			{
+				return;
+			}
+
 			highlightState = HighlightState.Normal;
 			direction = 1;
 			fadeStartTime = Time.time;
@@ -350,7 +358,12 @@ namespace AC
 					{
 						highlight = maxHighlight;
 						
-						if (highlightState == HighlightState.Flash || highlightState == HighlightState.Pulse)
+						if (highlightState == HighlightState.Flash)
+						{
+							direction = 0;
+							fadeStartTime = flashHoldTime;
+						}
+						else if (highlightState == HighlightState.Pulse)
 						{
 							direction = -1;
 							fadeStartTime = Time.time;
@@ -361,7 +374,7 @@ namespace AC
 						}
 					}
 				}
-				else
+				else if (direction == -1)
 				{
 					// Remove highlight
 					highlight = Mathf.Lerp (maxHighlight, minHighlight, AdvGame.Interpolate (fadeStartTime, fadeTime, AC.MoveMethod.Linear, null));
@@ -379,6 +392,17 @@ namespace AC
 						{
 							highlightState = HighlightState.None;
 						}
+					}
+				}
+				else if (direction == 0)
+				{
+					// Flash pause
+					fadeStartTime -= Time.deltaTime;
+					if (fadeStartTime <= 0f)
+					{
+						direction = -1;
+						highlight = maxHighlight;
+						fadeStartTime = Time.time;
 					}
 				}
 				

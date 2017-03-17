@@ -41,6 +41,15 @@ namespace AC
 		public bool showActive = true;
 		/** The method which this element (or slots within it) are hidden from view when made invisible (DisableObject, ClearContent) */
 		public UIHideStyle uiHideStyle = UIHideStyle.DisableObject;
+		/** If True, then the save file will be loaded/saved once its slot is clicked on */
+		public bool autoHandle = true;
+
+		/** If True, then only one save slot will be shown */
+		public bool fixedOption;
+		/** The index number of the save slot to show, if fixedOption = true */
+		public int optionToShow = 0;
+		/** If >=0, The ID number of the integer ActionParameter in actionListOnSave to set to the index number of the slot clicked */
+		public int parameterID = -1;
 
 		private string[] labels = null;
 
@@ -65,6 +74,11 @@ namespace AC
 			textEffects = TextEffects.None;
 			outlineSize = 2f;
 			uiHideStyle = UIHideStyle.DisableObject;
+
+			fixedOption = false;
+			optionToShow = 0;
+			autoHandle = true;
+			parameterID = -1;
 
 			base.Declare ();
 		}
@@ -95,6 +109,10 @@ namespace AC
 			actionListOnClick = _element.actionListOnClick;
 			showActive = _element.showActive;
 			uiHideStyle = _element.uiHideStyle;
+			autoHandle = _element.autoHandle;
+			parameterID = _element.parameterID;
+			fixedOption = _element.fixedOption;
+			optionToShow = _element.optionToShow;
 
 			base.Copy (_element);
 		}
@@ -173,16 +191,27 @@ namespace AC
 			MenuSource source = menu.menuSource;
 			EditorGUILayout.BeginVertical ("Button");
 
-			showActive = EditorGUILayout.Toggle ("Include active?", showActive);
-			maxSlots = EditorGUILayout.IntField ("Max no. of slots:", maxSlots);
-			if (source == MenuSource.AdventureCreator)
+			fixedOption = EditorGUILayout.ToggleLeft ("Fixed Profile ID only?", fixedOption);
+			if (fixedOption)
 			{
-				numSlots = EditorGUILayout.IntSlider ("Test slots:", numSlots, 1, maxSlots);
-				slotSpacing = EditorGUILayout.Slider ("Slot spacing:", slotSpacing, 0f, 20f);
-				orientation = (ElementOrientation) EditorGUILayout.EnumPopup ("Slot orientation:", orientation);
-				if (orientation == ElementOrientation.Grid)
+				numSlots = 1;
+				slotSpacing = 0f;
+				optionToShow = EditorGUILayout.IntField ("ID to display:", optionToShow);
+			}
+			else
+			{
+				showActive = EditorGUILayout.Toggle ("Include active?", showActive);
+				maxSlots = EditorGUILayout.IntField ("Max no. of slots:", maxSlots);
+
+				if (source == MenuSource.AdventureCreator)
 				{
-					gridWidth = EditorGUILayout.IntSlider ("Grid size:", gridWidth, 1, 10);
+					numSlots = EditorGUILayout.IntSlider ("Test slots:", numSlots, 1, maxSlots);
+					slotSpacing = EditorGUILayout.Slider ("Slot spacing:", slotSpacing, 0f, 20f);
+					orientation = (ElementOrientation) EditorGUILayout.EnumPopup ("Slot orientation:", orientation);
+					if (orientation == ElementOrientation.Grid)
+					{
+						gridWidth = EditorGUILayout.IntSlider ("Grid size:", gridWidth, 1, 10);
+					}
 				}
 			}
 			
@@ -195,8 +224,17 @@ namespace AC
 					outlineSize = EditorGUILayout.Slider ("Effect size:", outlineSize, 1f, 5f);
 				}
 			}
-			
-			actionListOnClick = ActionListAssetMenu.AssetGUI ("ActionList after selecting:", actionListOnClick, "", menu.title + "_" + title + "_After_Selecting");
+
+			autoHandle = EditorGUILayout.ToggleLeft ("Switch profile when click on?", autoHandle);
+
+			if (autoHandle)
+			{
+				ActionListGUI ("ActionList after selecting:", menu.title, "After_Selecting");
+			}
+			else
+			{
+				ActionListGUI ("ActionList when click:", menu.title, "When_Click");
+			}
 
 			if (source != MenuSource.AdventureCreator)
 			{
@@ -216,6 +254,32 @@ namespace AC
 			
 			base.ShowGUI (menu);
 		}
+
+
+		private void ActionListGUI (string label, string menuTitle, string suffix)
+		{
+			actionListOnClick = ActionListAssetMenu.AssetGUI (label, actionListOnClick, "", menuTitle + "_" + title + "_" + suffix);
+			
+			if (actionListOnClick != null && actionListOnClick.useParameters && actionListOnClick.parameters.Count > 0)
+			{
+				EditorGUILayout.BeginVertical ("Button");
+				EditorGUILayout.BeginHorizontal ();
+				parameterID = Action.ChooseParameterGUI ("", actionListOnClick.parameters, parameterID, ParameterType.Integer);
+				if (parameterID >= 0)
+				{
+					if (fixedOption)
+					{
+						EditorGUILayout.LabelField ("(= Save ID #)");
+					}
+					else
+					{
+						EditorGUILayout.LabelField ("(= Slot index)");
+					}
+				}
+				EditorGUILayout.EndHorizontal ();
+				EditorGUILayout.EndVertical ();
+			}
+		}
 		
 		#endif
 
@@ -227,6 +291,8 @@ namespace AC
 		 */
 		public override void Shift (AC_ShiftInventory shiftType, int amount)
 		{
+			if (fixedOption) return;
+
 			if (isVisible && numSlots >= maxSlots)
 			{
 				Shift (shiftType, maxSlots, KickStarter.options.GetNumProfiles (), amount);
@@ -241,7 +307,7 @@ namespace AC
 		 */
 		public override bool CanBeShifted (AC_ShiftInventory shiftType)
 		{
-			if (numSlots == 0)
+			if (numSlots == 0 || fixedOption)
 			{
 				return false;
 			}
@@ -265,6 +331,11 @@ namespace AC
 
 		private int GetMaxOffset ()
 		{
+			if (fixedOption)
+			{
+				return 0;
+			}
+
 			if (!showActive)
 			{
 				return Mathf.Max (0, KickStarter.options.GetNumProfiles () - 1 - maxSlots);
@@ -283,9 +354,20 @@ namespace AC
 		{
 			if (Application.isPlaying)
 			{
-				return KickStarter.options.GetProfileName (slot + offset, showActive);
+				if (fixedOption)
+				{
+					return KickStarter.options.GetProfileIDName (optionToShow);
+				}
+				else
+				{
+					return KickStarter.options.GetProfileName (slot + offset, showActive);
+				}
 			}
 
+			if (fixedOption)
+			{
+				return ("Profile ID " + optionToShow.ToString ());
+			}
 			return ("Profile " + slot.ToString ());
 		}
 
@@ -374,10 +456,40 @@ namespace AC
 			
 			base.ProcessClick (_menu, _slot, _mouseState);
 
-			bool isSuccess = KickStarter.options.SwitchProfileIfExists (_slot + offset, showActive);
-			if (isSuccess)
+			if (autoHandle)
 			{
-				AdvGame.RunActionListAsset (actionListOnClick);
+				bool isSuccess = false;
+
+				if (fixedOption)
+				{
+					isSuccess = Options.SwitchProfileID (optionToShow);
+				}
+				else
+				{
+					isSuccess = KickStarter.options.SwitchProfile (_slot + offset, showActive);
+				}
+
+				if (isSuccess)
+				{
+					RunActionList (_slot);
+				}
+			}
+			else
+			{
+				RunActionList (_slot);
+			}
+		}
+
+
+		private void RunActionList (int _slot)
+		{
+			if (fixedOption)
+			{
+				AdvGame.RunActionListAsset (actionListOnClick, parameterID, optionToShow);
+			}
+			else
+			{
+				AdvGame.RunActionListAsset (actionListOnClick, parameterID, _slot + offset);
 			}
 		}
 
@@ -391,19 +503,26 @@ namespace AC
 		{
 			if (Application.isPlaying)
 			{
-				numSlots = KickStarter.options.GetNumProfiles ();
-
-				if (!showActive)
+				if (fixedOption)
 				{
-					numSlots --;
+					numSlots = 1;
 				}
-
-				if (numSlots > maxSlots)
+				else
 				{
-					numSlots = maxSlots;
-				}
+					numSlots = KickStarter.options.GetNumProfiles ();
 
-				offset = Mathf.Min (offset, GetMaxOffset ());
+					if (!showActive)
+					{
+						numSlots --;
+					}
+
+					if (numSlots > maxSlots)
+					{
+						numSlots = maxSlots;
+					}
+
+					offset = Mathf.Min (offset, GetMaxOffset ());
+				}
 			}
 			
 			labels = new string [numSlots];

@@ -717,6 +717,19 @@ namespace AC
 				return null;
 			}
 		}
+
+
+		public static Music music
+		{
+			get
+			{
+				if (KickStarter.stateHandler != null)
+				{
+					return KickStarter.stateHandler.GetMusicEngine ();
+				}
+				return null;
+			}
+		}
 		
 		
 		public static Player player
@@ -948,16 +961,24 @@ namespace AC
 					{
 						KickStarter.playerPrefab = GameObject.FindWithTag (Tags.player).GetComponent <Player>();
 
+						SetPersistentEngine ();
+			
 						if (sceneChanger == null || sceneChanger.GetPlayerOnTransition () == null)
 						{
-							// New local player
+							// New local player after another local player scene
 							if (KickStarter.playerPrefab != null)
 							{
 								KickStarter.playerPrefab.Initialise ();
+								SetLocalPlayerID (KickStarter.playerPrefab);
 							}
 						}
 						
 						AssignLocalPlayer ();
+					}
+
+					if (GameObject.FindWithTag (Tags.player) == null && KickStarter.settingsManager.movementMethod != MovementMethod.None)
+					{
+						ACDebug.LogWarning ("No Player found - please set one using the Settings Manager, tagging it as Player and placing it in a Resources folder");
 					}
 				}
 				
@@ -989,11 +1010,6 @@ namespace AC
 				if (menuManager == null)
 				{
 					ACDebug.LogError ("No Menu Manager found - please set one using the main Adventure Creator window");
-				}
-				
-				if (GameObject.FindWithTag (Tags.player) == null && KickStarter.settingsManager.movementMethod != MovementMethod.None)
-				{
-					ACDebug.LogWarning ("No Player found - please set one using the Settings Manager, tagging it as Player and placing it in a Resources folder");
 				}
 			}
 			else
@@ -1115,8 +1131,38 @@ namespace AC
 			{
 				ACDebug.LogError (this.name + " has no EventManager component attached.");
 			}
+
+			if (KickStarter.player != null)
+			{
+				if (KickStarter.saveSystem != null && KickStarter.saveSystem.loadingGame == LoadingGame.JustSwitchingPlayer
+				 && KickStarter.settingsManager != null && KickStarter.settingsManager.useLoadingScreen)
+				 {
+				 	// Special case: As player is moved out of way when in a loading screen, need to re-load position data once in new scene
+					saveSystem.AssignPlayerAllData (KickStarter.player);
+				 }
+				 else
+				 {
+					saveSystem.AssignPlayerAnimData (KickStarter.player);
+				 }
+			}
 		}
-		
+
+
+		private static void SetLocalPlayerID (Player player)
+		{
+			player.ID = (-2 - UnityVersionHandler.GetCurrentSceneNumber ()); // Always unique to the scene
+
+			if (KickStarter.settingsManager != null && KickStarter.settingsManager.playerSwitching == PlayerSwitching.Allow)
+			{
+				ACDebug.LogWarning ("The use of 'in-scene' local Players is not recommended when Player-switching is enabled - consider using the 'Player: Switch' Action to change Player instead.");
+			}
+
+			if (KickStarter.saveSystem != null && KickStarter.saveSystem.DoesPlayerDataExist (player.ID))
+			{
+				KickStarter.saveSystem.AssignPlayerAnimData (player);
+			}
+		}
+
 		
 		private void OnDestroy ()
 		{
@@ -1189,9 +1235,8 @@ namespace AC
 		}
 
 
-		public static void AssignLocalPlayer ()
+		private static void AssignLocalPlayer ()
 		{
-			SetPersistentEngine ();
 			if (sceneChanger != null && sceneChanger.GetPlayerOnTransition () != null)
 			{
 				// Replace "prefab" player with a local one if one exists
@@ -1202,7 +1247,8 @@ namespace AC
 					{
 						KickStarter.sceneChanger.DestroyOldPlayer ();
 						KickStarter.playerPrefab = playerOb.GetComponent <Player>();
-						KickStarter.playerPrefab.ID = -1;
+						SetLocalPlayerID (KickStarter.playerPrefab);
+
 						break;
 					}
 				}

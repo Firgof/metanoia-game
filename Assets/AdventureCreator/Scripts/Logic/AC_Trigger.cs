@@ -204,7 +204,7 @@ namespace AC
 			{
 				return false;
 			}
-			
+
 			if (detects == TriggerDetects.Player)
 			{
 				if (obToCheck.CompareTag (Tags.player))

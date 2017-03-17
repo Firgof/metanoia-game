@@ -52,6 +52,7 @@ namespace AC
 		
 		private List<int> offsets = new List<int>();
 		private int sortingOrder = 0;
+		private string sortingOrderString = "";
 		private string sortingLayer = "";
 		private SortingMap sortingMap;
 		
@@ -62,6 +63,7 @@ namespace AC
 			{
 				return;
 			}
+			sortingOrderString = sortingOrder.ToString ();
 
 			renderers = GetComponentsInChildren <Renderer>();
 
@@ -144,7 +146,7 @@ namespace AC
 			
 			if (sortingMap.mapType == SortingMapType.OrderInLayer)
 			{
-				return sortingOrder.ToString ();
+				return sortingOrderString;
 			}
 			else
 			{
@@ -310,6 +312,7 @@ namespace AC
 				if (sortingMap.mapType == SortingMapType.OrderInLayer)
 				{
 					sortingOrder = sortingMap.sortingAreas [sortingMap.sortingAreas.Count-1].order;
+					sortingOrderString = sortingOrder.ToString ();
 				}
 				else if (sortingMap.mapType == SortingMapType.SortingLayer)
 				{
@@ -324,6 +327,7 @@ namespace AC
 						if (sortingMap.mapType == SortingMapType.OrderInLayer)
 						{
 							sortingOrder = sortingMap.sortingAreas [i].order;
+							sortingOrderString = sortingOrder.ToString ();
 						}
 						else if (sortingMap.mapType == SortingMapType.SortingLayer)
 						{

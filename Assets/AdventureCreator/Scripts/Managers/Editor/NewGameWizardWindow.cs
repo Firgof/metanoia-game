@@ -230,6 +230,7 @@ namespace AC
 				if (demoActionsManager != null)
 				{
 					references.actionsManager.defaultClass = demoActionsManager.defaultClass;
+					references.actionsManager.defaultClassName = demoActionsManager.defaultClassName;
 				}
 
 				t = CustomAssetUtility.CreateAsset<VariablesManager> ("VariablesManager", managerPath);

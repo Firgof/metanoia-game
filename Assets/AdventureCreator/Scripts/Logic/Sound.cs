@@ -347,12 +347,13 @@ namespace AC
 		 * <summary>Plays an AudioClip.</summary>
 		 * <param name = "clip">The AudioClip to play</param>
 		 * <param name = "loop">If true, the AudioClip will be looped</param>
+		 * <param name = "_timeSamples">The timeSamples to play from</param>
 		 */
-		public void Play (AudioClip clip, bool loop)
+		public void Play (AudioClip clip, bool loop, int _timeSamples = 0)
 		{
 			audioSource.clip = clip;
 			audioSource.loop = loop;
-			audioSource.timeSamples = 0;
+			audioSource.timeSamples = _timeSamples;
 			Play ();
 		}
 
@@ -377,6 +378,14 @@ namespace AC
 		public void SetMaxVolume ()
 		{
 			maxVolume = relativeVolume;
+
+			#if UNITY_5
+			if (KickStarter.settingsManager.volumeControl == VolumeControl.AudioMixerGroups)
+			{
+				SetFinalVolume ();
+				return;
+			}
+			#endif
 
 			if (Options.optionsData != null)
 			{
@@ -408,6 +417,13 @@ namespace AC
 		 */
 		public void SetVolume (float volume)
 		{
+			#if UNITY_5
+			if (KickStarter.settingsManager.volumeControl == VolumeControl.AudioMixerGroups)
+			{
+				volume = 1f;
+			}
+			#endif
+
 			maxVolume = relativeVolume * volume;
 			otherVolume = volume;
 			SetFinalVolume ();
@@ -513,12 +529,6 @@ namespace AC
 		{
 			if (surviveSceneChange && !audioSource.isPlaying)
 			{
-				/*if (GetComponent <RememberSound>())
-				{
-					DestroyImmediate (GetComponent <RememberSound>());
-				}
-				DestroyImmediate (this);*/
-
 				if (gameObject.GetComponentInParent <Player>() != null ||
 					GetComponent <Player>() != null ||
 					GetComponentInChildren <Player>() != null)

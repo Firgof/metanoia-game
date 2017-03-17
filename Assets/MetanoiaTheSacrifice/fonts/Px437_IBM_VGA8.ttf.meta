@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: 8fd1f96d517146e478b40184776a0331
+timeCreated: 1489787084
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Px437 IBM VGA8
+  fontNames:
+  - Px437 IBM VGA8
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -6,7 +6,7 @@
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace></RootNamespace>
-    <ProjectGuid>{685FAA27-723F-556F-5157-B5ECC41097AC}</ProjectGuid>
+    <ProjectGuid>{FDF4ECD5-B80C-F069-406C-3A786DFA26FF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <AssemblyName>Assembly-CSharp</AssemblyName>
@@ -230,6 +230,7 @@
      <Compile Include="Assets\AdventureCreator\Scripts\Actions\ActionContainerSet.cs" />
      <Compile Include="Assets\AdventureCreator\Scripts\Actions\ActionConversation.cs" />
      <Compile Include="Assets\AdventureCreator\Scripts\Actions\ActionDialogOption.cs" />
+     <Compile Include="Assets\AdventureCreator\Scripts\Actions\ActionDialogOptionRename.cs" />
      <Compile Include="Assets\AdventureCreator\Scripts\Actions\ActionDialogueSystemAlert.cs" />
      <Compile Include="Assets\AdventureCreator\Scripts\Actions\ActionDialogueSystemBark.cs" />
      <Compile Include="Assets\AdventureCreator\Scripts\Actions\ActionDialogueSystemCheckConversationActive.cs" />
@@ -505,6 +506,7 @@
      <Compile Include="Assets\AdventureCreator\Scripts\Static\UnityVersionHandler.cs" />
      <Compile Include="Assets\AdventureCreator\Scripts\Static\WorldSpaceCursorExample.cs" />
      <Compile Include="Assets\AdventureCreator\Scripts\Static\tk2DIntegration.cs" />
+     <Compile Include="Assets\AdventureCreator\Scripts\Variables\AutoCreateVariableWindow.cs" />
      <Compile Include="Assets\AdventureCreator\Scripts\Variables\CustomToken.cs" />
      <Compile Include="Assets\AdventureCreator\Scripts\Variables\GVar.cs" />
      <Compile Include="Assets\AdventureCreator\Scripts\Variables\LocalVariables.cs" />
@@ -851,11 +853,13 @@
      <Compile Include="Assets\Dialogue System\Scripts\Supplemental\Utility\ExtraDatabases.cs" />
      <Compile Include="Assets\Dialogue System\Scripts\Supplemental\Utility\From Unity3D Community\SmoothCameraWithBumper.cs" />
      <Compile Include="Assets\Dialogue System\Scripts\Supplemental\Utility\IncrementOnDestroy.cs" />
+     <Compile Include="Assets\Dialogue System\Scripts\Supplemental\Utility\LocalizeTextMesh.cs" />
      <Compile Include="Assets\Dialogue System\Scripts\Supplemental\Utility\LuaNetworkCommands.cs" />
      <Compile Include="Assets\Dialogue System\Scripts\Supplemental\Utility\NavigateOnMouseClick.cs" />
      <Compile Include="Assets\Dialogue System\Scripts\Supplemental\Utility\PauseGameOnConversation.cs" />
      <Compile Include="Assets\Dialogue System\Scripts\Supplemental\Utility\PersistentDestructible.cs" />
      <Compile Include="Assets\Dialogue System\Scripts\Supplemental\Utility\ProximitySelector.cs" />
+     <Compile Include="Assets\Dialogue System\Scripts\Supplemental\Utility\QuestLogWindowHotkey.cs" />
      <Compile Include="Assets\Dialogue System\Scripts\Supplemental\Utility\QuestStateDispatcher.cs" />
      <Compile Include="Assets\Dialogue System\Scripts\Supplemental\Utility\QuestStateIndicator.cs" />
      <Compile Include="Assets\Dialogue System\Scripts\Supplemental\Utility\QuestStateListener.cs" />
@@ -1639,6 +1643,37 @@
      <Compile Include="Assets\ScreenDrops\_Scripts\ScreenDrops.cs" />
      <Compile Include="Assets\ScrollTexture.cs" />
      <Compile Include="Assets\SuicideWatch.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\Benchmark01.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\Benchmark01_UGUI.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\Benchmark02.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\Benchmark03.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\Benchmark04.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\CameraController.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\ChatController.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\ObjectSpin.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\ShaderPropAnimator.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\SimpleScript.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\SkewTextExample.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TMP_DigitValidator.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TMP_ExampleScript_01.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TMP_FrameRateCounter.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TMP_TextEventCheck.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TMP_TextEventHandler.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TMP_TextInfoDebugTool.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TMP_TextSelector_A.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TMP_TextSelector_B.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TMP_UiFrameRateCounter.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TMPro_InstructionOverlay.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TeleType.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TextConsoleSimulator.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TextMeshProFloatingText.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\TextMeshSpawner.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\VertexColorCycler.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\VertexJitter.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\VertexShakeA.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\VertexShakeB.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\VertexZoom.cs" />
+     <Compile Include="Assets\TextMesh Pro\Examples\Scripts\WarpTextExample.cs" />
      <Compile Include="Assets\Typewriter and Fade-in Text Effect\Examples\Scripts\DialogueSample.cs" />
      <Compile Include="Assets\Typewriter and Fade-in Text Effect\Examples\Scripts\LegacyGUISample.cs" />
      <Compile Include="Assets\Typewriter and Fade-in Text Effect\Examples\Scripts\TriggerObserverSample.cs" />
@@ -1646,6 +1681,10 @@
      <Compile Include="Assets\Typewriter and Fade-in Text Effect\Scripts\RichTextUtils.cs" />
      <Compile Include="Assets\Typewriter and Fade-in Text Effect\Scripts\Typewriter.cs" />
      <Compile Include="Assets\Typewriter and Fade-in Text Effect\Scripts\TypewriterSound.cs" />
+     <Compile Include="Assets\UltimateCRT\Demo\Scripts\ImageSwitcher.cs" />
+     <Compile Include="Assets\UltimateCRT\Scripts\BaseCRTEffect.cs" />
+     <Compile Include="Assets\UltimateCRT\Scripts\CRTEffect.cs" />
+     <Compile Include="Assets\UltimateCRT\Scripts\StandaloneCRTEffect.cs" />
      <Compile Include="Assets\buttonClickStay.cs" />
      <Compile Include="Assets\iTween\iTween.cs" />
      <Compile Include="Assets\inkChoicePrefab.cs" />
@@ -1658,6 +1697,7 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Color_YUV.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Drawing_Crosshatch.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Blend2Camera_HardLight.shader" />
+     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Leading Characters.txt" />
      <None Include="Assets\2DxFX\Resources\_2dxFX_Smoke.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_DigitalMatrix.shader" />
      <None Include="Assets\Dialogue System\Examples\Mobile Test\_README.txt" />
@@ -1665,6 +1705,7 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Distortion_FishEye.shader" />
      <None Include="Assets\2DxFX\Resources\2dxfx_AL\_2dxFX_AL_Distortion.shader" />
      <None Include="Assets\Dialogue System\Examples\Bark Example\Three NPCs Bark\_README.txt" />
+     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_Bitmap-Mobile.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Drawing_Paper.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_EXTRA_SHOWFPS.shader" />
      <None Include="Assets\ScreenDrops\Readme.txt" />
@@ -1692,6 +1733,7 @@
      <None Include="Assets\Dialogue System\Prefabs\Legacy Unity GUI Prefabs\Computer\Bitwise Font\!license.txt" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Gradients_Stripe.shader" />
      <None Include="Assets\2DxFX\Resources\_2dxFX_Teleportation.shader" />
+     <None Include="Assets\TextMesh Pro\Fonts\Anton OFL.txt" />
      <None Include="Assets\2DxFX\Resources\_2dxFX_GrassMultiFX.shader" />
      <None Include="Assets\PlayMaker\Readme.txt" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Lut_Simple.shader" />
@@ -1713,8 +1755,10 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Blend2Camera_SplitScreen.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_EyesVision_1.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Gradients_Ansi.shader" />
+     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMPro_Surface.cginc" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_TV_Artefact.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_TV_Horror.shader" />
+     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_SDF-Surface.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_TV_Old_Movie_2.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_3D_Inverse.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_3D_Binary.shader" />
@@ -1722,6 +1766,7 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Blend2Camera_SoftLight.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Blend2Camera_Divide.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Drawing_Manga2.shader" />
+     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_SDF.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Edge_Sobel_2.shader" />
      <None Include="Assets\Dialogue System\Prefabs\Legacy Unity GUI Prefabs\Computer\Typing.txt" />
      <None Include="Assets\Dialogue System\Examples\Lua Example\_README.txt" />
@@ -1773,6 +1818,8 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Lut_TestMode.shader" />
      <None Include="Assets\2DxFX\Resources\2dxfx_AL\_2dxFX_AL_Hologram2.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Blend2Camera_PinLight.shader" />
+     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_SDF-Mobile Overlay.shader" />
+     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMPro_Properties.cginc" />
      <None Include="Assets\AdventureCreator\Graphics\Fonts\SIL Open Font License.txt" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_ZebraColor.shader" />
      <None Include="Assets\Dialogue System\DLLs\_README.txt" />
@@ -1804,6 +1851,7 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Distortion_Heat.shader" />
      <None Include="Assets\2DxFX\Resources\_2dxFX_WoodFX.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Light_Rainbow2.shader" />
+     <None Include="Assets\UltimateCRT\Resources\CRTFinalPostprocess.cg.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_VHS_Tracking.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_TV_80.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Lut_Plus.shader" />
@@ -1823,6 +1871,7 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Blend2Camera_LinearDodge.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Distortion_ShockWaveManual.shader" />
      <None Include="Assets\2DxFX\Resources\2dxfx_AL\_2dxFX_AL_Twist.shader" />
+     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_SDF-Surface-Mobile.shader" />
      <None Include="Assets\SimplePhysicalShader\SimplePhysicalShader.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Color_BrightContrastSaturation.shader" />
      <None Include="Assets\2DxFX\Resources\_2dxFX_EnergyBar.shader" />
@@ -1863,7 +1912,9 @@
      <None Include="Assets\2DxFX\Resources\_2dxFX_Negative.shader" />
      <None Include="Assets\2DxFX\Resources\_2dxFX_BlackHole.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_AAA_SuperHexagon.shader" />
+     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_SDF Overlay.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Atmosphere_Rain.shader" />
+     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMPro.cginc" />
      <None Include="Assets\Dialogue System\Prefabs\Unity UI Prefabs\_README.txt" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_AAA_WaterDropPro.shader" />
      <None Include="Assets\2DxFX\Resources\_2dxFX_GoldenFX.shader" />
@@ -1890,6 +1941,7 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Distortion_Dream.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Color_GrayScale.shader" />
      <None Include="Assets\Typewriter and Fade-in Text Effect\Changelog.txt" />
+     <None Include="Assets\TextMesh Pro\Fonts\Oswald-Bold - OFL.txt" />
      <None Include="Assets\Dialogue System\Prefabs\Legacy Unity GUI Prefabs\Necromancer\Necromancer GUI\Kingthings.txt" />
      <None Include="Assets\2DxFX\Resources\2dxfx_AL\_2dxFX_AL_GoldenFX.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Drawing_Lines.shader" />
@@ -1897,6 +1949,7 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_Glitch3.shader" />
      <None Include="Assets\2DxFX\Resources\2dxfx_AL\_2dxFX_AL_BurningFX.shader" />
      <None Include="Assets\Dialogue System\Examples\Art\_README.txt" />
+     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_SDF-Mobile Masking.shader" />
      <None Include="Assets\2DxFX\Resources\_2dxFX_Hologram.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Vision_Crystal.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Vision_Warp2.shader" />
@@ -1912,6 +1965,7 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Oculus_NightVision5.shader" />
      <None Include="Assets\net.fabrejean\Editor\Common\GuiSkins\VolcanicGuiSkin\ReadMeForCredits.txt" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_Glitch1.shader" />
+     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_Bitmap.shader" />
      <None Include="Assets\2DxFX\Resources\2dxfx_AL\_2dxFX_AL_CompressionFX.shader" />
      <None Include="Assets\2DxFX\Resources\2dxfx_AL\_2dxFX_AL_HSV.shader" />
      <None Include="Assets\2DxFX\Resources\2dxfx_AL\_2dxFX_AL_DesintegrationFX.shader" />
@@ -1922,11 +1976,14 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Distortion_Water_Drop.shader" />
      <None Include="Assets\Dialogue System\Examples\Feature Demo\Dialogue Database\Feature Demo.xml" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_Hexagon.shader" />
+     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_Sprite.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Alien_Vision.shader" />
+     <None Include="Assets\UltimateCRT\Resources\CRTBlur.cg.shader" />
      <None Include="Assets\Dialogue System\Examples\Quest Example\_README.txt" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Distortion_Half_Sphere.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Edge_Edge_filter.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Light_Water2.shader" />
+     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_SDF-Mobile.shader" />
      <None Include="Assets\2DxFX\Resources\2dxfx_AL\_2dxFX_AL_GoldFX.shader" />
      <None Include="Assets\2DxFX\Resources\_2dxFX_PixelDie.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_Drunk.shader" />
@@ -1941,12 +1998,14 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Blend2Camera_Lighten.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Oculus_NightVision2.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_TV_WideScreenCircle.shader" />
+     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Glow_Glow.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Glitch_Mozaic.shader" />
      <None Include="Assets\Dialogue System\Prefabs\Legacy Unity GUI Prefabs\_README.txt" />
      <None Include="Assets\2DxFX\Resources\_2dxFX_PlasmaShield.shader" />
      <None Include="Assets\Dialogue System\Examples\Feature Demo\_README.txt" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_EXTRA_Rotation.shader" />
+     <None Include="Assets\TextMesh Pro\Fonts\LiberationSans - OFL.txt" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Edge_Neon.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Blur_Tilt_Shift_Hole.shader" />
      <None Include="Assets\Dialogue System\Prefabs\iOS\link.xml" />
@@ -2003,6 +2062,7 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_TV_WideScreenHV.shader" />
      <None Include="Assets\Dialogue System\Prefabs\Legacy Unity GUI Prefabs\Wheel\_README.txt" />
      <None Include="Assets\2DxFX\Resources\2dxfx_AL\_2dxFX_AL_PlasmaShield.shader" />
+     <None Include="Assets\TextMesh Pro\Fonts\Bangers - OFL.txt" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Gradients_Tech.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Drawing_Comics.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Distortion_Dissipation.shader" />
@@ -2018,6 +2078,7 @@
      <None Include="Assets\2DxFX\Resources\2dxfx_AL\_2dxFX_AL_MetalFX.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Colors_HSV.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Vision_Drost.shader" />
+     <None Include="Assets\UltimateCRT\Resources\CRTPostprocess.cg.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Colors_Adjust_ColorRGB.shader" />
      <None Include="Assets\PlayMaker\Resources\PlayMakerAssemblies.txt" />
      <None Include="Assets\2DxFX\Resources\_2dxFX_HSV.shader" />
@@ -2170,21 +2231,24 @@
  <HintPath>D:/Unity5/Editor/Data/UnityExtensions/Unity/UnityVR/RuntimeEditor/UnityEngine.VR.dll</HintPath>
  </Reference>
  <Reference Include="DialogueSystem">
- <HintPath>C:/Users/Firgof/Documents/MetanoiaTS/Assets/Dialogue System/DLLs/DialogueSystem.dll</HintPath>
+ <HintPath>C:/Users/Firgof/Documents/metanoia-game/metanoia-game/Assets/Dialogue System/DLLs/DialogueSystem.dll</HintPath>
  </Reference>
  <Reference Include="LuaInterpreter">
- <HintPath>C:/Users/Firgof/Documents/MetanoiaTS/Assets/Dialogue System/DLLs/LuaInterpreter.dll</HintPath>
+ <HintPath>C:/Users/Firgof/Documents/metanoia-game/metanoia-game/Assets/Dialogue System/DLLs/LuaInterpreter.dll</HintPath>
  </Reference>
  <Reference Include="ConditionalExpression">
- <HintPath>C:/Users/Firgof/Documents/MetanoiaTS/Assets/PlayMaker/ConditionalExpression.dll</HintPath>
+ <HintPath>C:/Users/Firgof/Documents/metanoia-game/metanoia-game/Assets/PlayMaker/ConditionalExpression.dll</HintPath>
  </Reference>
  <Reference Include="PlayMaker">
- <HintPath>C:/Users/Firgof/Documents/MetanoiaTS/Assets/Plugins/PlayMaker/PlayMaker.dll</HintPath>
+ <HintPath>C:/Users/Firgof/Documents/metanoia-game/metanoia-game/Assets/Plugins/PlayMaker/PlayMaker.dll</HintPath>
+ </Reference>
+ <Reference Include="TextMeshPro">
+ <HintPath>C:/Users/Firgof/Documents/metanoia-game/metanoia-game/Assets/TextMesh Pro/Plugins/TextMeshPro.dll</HintPath>
  </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Assembly-CSharp-firstpass.csproj">
-      <Project>{BC1E3C52-BB93-197D-3847-B5689C29D540}</Project>      <Name>Assembly-CSharp-firstpass</Name>    </ProjectReference>
+      <Project>{26581D49-63B0-6331-676D-1615708BF614}</Project>      <Name>Assembly-CSharp-firstpass</Name>    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -30,6 +30,34 @@ namespace AC
 
 		/** The list of inventory items held by the Container */
 		public List<ContainerItem> items = new List<ContainerItem>();
+		/** If True, only inventory items (InvItem) with a specific category will be displayed */
+		public bool limitToCategory;
+		/** The category IDs to limit the display of inventory items by, if limitToCategory = True */
+		public List<int> categoryIDs = new List<int>();
+
+
+		private void Awake ()
+		{
+			RemoveWrongItems ();
+		}
+
+
+		private void RemoveWrongItems ()
+		{
+			if (limitToCategory && categoryIDs.Count > 0)
+			{
+				for (int i=0; i<items.Count; i++)
+				{
+					InvItem listedItem = KickStarter.inventoryManager.GetItem (items[i].linkedID);
+					if (!categoryIDs.Contains (listedItem.binID))
+					{
+						items.RemoveAt (i);
+						i--;
+					}
+				}
+			}
+		}
+
 
 
 		/**
@@ -45,8 +73,9 @@ namespace AC
 		 * <summary>Adds an inventory item to the Container's contents.</summary>
 		 * <param name = "_id">The ID number of the InvItem to add</param>
 		 * <param name = "amount">How many instances of the inventory item to add</param>
+		 * <returns>True if the addition was succesful</returns>
 		 */
-		public void Add (int _id, int amount)
+		public bool Add (int _id, int amount)
 		{
 			// Raise "count" by 1 for appropriate ID
 			foreach (ContainerItem containerItem in items)
@@ -57,23 +86,29 @@ namespace AC
 					{
 						containerItem.count += amount;
 					}
-					return;
+					return false;
 				}
 			}
 
 			// Not already carrying the item
-			foreach (InvItem assetItem in KickStarter.inventoryManager.items)
+			InvItem itemToAdd = KickStarter.inventoryManager.GetItem (_id);
+			if (itemToAdd != null)
 			{
-				if (assetItem.id == _id)
+				if (limitToCategory && !categoryIDs.Contains (itemToAdd.binID))
 				{
-					if (!KickStarter.inventoryManager.CanCarryMultiple (_id))
-					{
-						amount = 1;
-					}
-
-					items.Add (new ContainerItem (_id, amount, GetIDArray ()));
+					return false;
 				}
+
+				if (!itemToAdd.canCarryMultiple)
+				{
+					amount = 1;
+				}
+
+				items.Add (new ContainerItem (_id, amount, GetIDArray ()));
+				return true;
 			}
+
+			return true;
 		}
 		
 
@@ -127,9 +162,15 @@ namespace AC
 		 * <summary>Adds an inventory item to the Container's contents, at a particular index.</summary>
 		 * <param name = "_item">The InvItem to place within the Container</param>
 		 * <param name = "_index">The index number within the Container's current contents to insert the new item</param>
+		 * <returns>The ContainerItem instance of the added item</returns>
 		 */
-		public void InsertAt (InvItem _item, int _index)
+		public ContainerItem InsertAt (InvItem _item, int _index)
 		{
+			if (limitToCategory && !categoryIDs.Contains (_item.binID))
+			{
+				return null;
+			}
+
 			ContainerItem newContainerItem = new ContainerItem (_item.id, GetIDArray ());
 			newContainerItem.count = _item.count;
 
@@ -141,6 +182,8 @@ namespace AC
 			{
 				items.Insert (_index, newContainerItem);
 			}
+
+			return newContainerItem;
 		}
 
 

@@ -61,6 +61,19 @@ namespace AC
 
 
 		/**
+		 * <summary>Finds a random position surrounding a given point on a NavMesh.</summary>
+		 * <param name = "point">The given point on the NavMesh</param>
+		 * <param name = "minDistance">The minimum distance between the given point and the random point</param>
+		 * <param name = "maxDistance">The maximum distance between the given point and the random point</param>
+		 * <returns>A random position surrounding the given point. If a suitable point is not found, the original point will be returned.</returns>
+		 */
+		public virtual Vector3 GetPointNear (Vector3 point, float minDistance, float maxDistance)
+		{
+			return point;
+		}
+
+
+		/**
 		 * <summary>Gets the name of a "helper" prefab to list in the Scene Manager.</summary>
 		 * <returns>The name of the prefab to list in SceneManager. The prefab must be placed in the Assets/AdventureCreator/Prefabs/Navigation folder. If nothing is returned, no prefab will be listed.</returns>
 		 */

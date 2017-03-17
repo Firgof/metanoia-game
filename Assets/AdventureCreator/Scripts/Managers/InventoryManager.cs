@@ -1,9 +1,9 @@
 /*
  *
  *	Adventure Creator
- *	by Chris Burton, 2013-2016
+ *	by Chris Burton, 2013-2017
  *	
- *	"ActionsManager.cs"
+ *	"InventoryManager.cs"
  * 
  *	This script handles the "Inventory" tab of the main wizard.
  *	Inventory items are defined with this.

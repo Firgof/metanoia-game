@@ -185,7 +185,7 @@ namespace AC
 		#if UNITY_EDITOR
 		
 		/**
-		 * Displays the GUI of the class's entry within the Speech Manager.
+		 * <summary>Displays the GUI of the class's entry within the Speech Manager.</summary>
 		 */
 		public void ShowGUI ()
 		{

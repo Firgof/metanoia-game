@@ -348,7 +348,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   once: 0
-  sequence: LoadLevel(Airlock)
+  sequence: LoadLevel(Airlock, Spawnpoint From Server Room)
   speaker: {fileID: 0}
   listener: {fileID: 0}
   condition:
@@ -2835,6 +2835,7 @@ MonoBehaviour:
     acceptedGameObjects: []
     luaWizardIndex: -1
   skipIfNoValidEntries: 0
+  exclusive: 0
   conversant: {fileID: 0}
   useConversationTitlePicker: 1
   selectedDatabase: {fileID: 0}
@@ -3247,7 +3248,7 @@ Transform:
   - {fileID: 1402603298}
   - {fileID: 761502729}
   m_Father: {fileID: 1932205272}
-  m_RootOrder: 2
+  m_RootOrder: 3
 --- !u!111 &741849450
 Animation:
   m_ObjectHideFlags: 0
@@ -3350,6 +3351,7 @@ MonoBehaviour:
     acceptedGameObjects: []
     luaWizardIndex: -1
   skipIfNoValidEntries: 0
+  exclusive: 0
   conversant: {fileID: 0}
   useConversationTitlePicker: 1
   selectedDatabase: {fileID: 0}
@@ -3398,6 +3400,33 @@ Transform:
   - {fileID: 42695704}
   m_Father: {fileID: 226615739}
   m_RootOrder: 0
+--- !u!1 &754470592
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 754470593}
+  m_Layer: 0
+  m_Name: Spawnpoint From Airlock
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &754470593
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 754470592}
+  m_LocalRotation: {x: 0, y: .0379368551, z: 0, w: .999280214}
+  m_LocalPosition: {x: 2.17871451, y: 0, z: -7.71088839}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1932205272}
+  m_RootOrder: 1
 --- !u!1 &761502728
 GameObject:
   m_ObjectHideFlags: 0
@@ -4562,7 +4591,7 @@ Transform:
   - {fileID: 1331120026}
   - {fileID: 702317453}
   m_Father: {fileID: 1932205272}
-  m_RootOrder: 1
+  m_RootOrder: 2
 --- !u!111 &1026855502
 Animation:
   m_ObjectHideFlags: 0
@@ -4712,6 +4741,12 @@ MonoBehaviour:
   defaultUseMessage: (spacebar to interact)
   broadcastToChildren: 1
   actorTransform: {fileID: 0}
+  tooFarMessage: 
+  tooFarEvent:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
   debug: 0
 --- !u!114 &1026855506
 MonoBehaviour:
@@ -7445,6 +7480,7 @@ MonoBehaviour:
     acceptedGameObjects: []
     luaWizardIndex: -1
   skipIfNoValidEntries: 0
+  exclusive: 0
   conversant: {fileID: 741849449}
   useConversationTitlePicker: 1
   selectedDatabase: {fileID: 0}
@@ -8837,6 +8873,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 48344985}
+  - {fileID: 754470593}
   - {fileID: 1026855501}
   - {fileID: 741849449}
   - {fileID: 2087508253}
@@ -9685,7 +9722,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1932205272}
-  m_RootOrder: 3
+  m_RootOrder: 4
 --- !u!114 &2087508254
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9698,6 +9735,7 @@ MonoBehaviour:
   m_Script: {fileID: 745944170, guid: b5a7519e94754fb4a8ea0c272031db78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  priority: 0
   ui: {fileID: 100038, guid: 1fd0b032134ab05499b23cce5db54723, type: 2}
 --- !u!114 &2087508255
 MonoBehaviour:
@@ -9720,6 +9758,7 @@ MonoBehaviour:
     acceptedGameObjects: []
     luaWizardIndex: -1
   skipIfNoValidEntries: 0
+  exclusive: 0
   conversant: {fileID: 0}
   useConversationTitlePicker: 1
   selectedDatabase: {fileID: 0}
@@ -9797,6 +9836,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   overrideName: Terminal
   internalName: 
+  useLocalizedNameInDatabase: 0
 --- !u!1 &2121653943
 GameObject:
   m_ObjectHideFlags: 0

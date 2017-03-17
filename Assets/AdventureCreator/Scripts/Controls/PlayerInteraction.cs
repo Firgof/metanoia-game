@@ -44,6 +44,7 @@ namespace AC
 		{
 			if (KickStarter.stateHandler.gameState == GameState.Normal)			
 			{
+
 				if (KickStarter.playerInput.GetDragState () == DragState.Moveable)
 				{
 					DeselectHotspot (true);
@@ -76,6 +77,14 @@ namespace AC
 				
 				if (!KickStarter.playerInput.IsCursorReadable ())
 				{
+					if (KickStarter.settingsManager.hotspotDetection == HotspotDetection.PlayerVicinity &&
+						KickStarter.settingsManager.inputMethod == InputMethod.TouchScreen &&
+						KickStarter.player != null &&
+						KickStarter.player.hotspotDetector != null)
+					{
+						// Special case: Highlight hotspots here, because they don't rely on the mouse position to do so
+						KickStarter.player.hotspotDetector.HighlightAll ();
+					}
 					return;
 				}
 
@@ -220,7 +229,7 @@ namespace AC
 					hit = UnityVersionHandler.Perform2DRaycast (
 						Camera.main.ScreenToWorldPoint (KickStarter.playerInput.GetMousePosition ()),
 						Vector3.zero,
-						KickStarter.settingsManager.navMeshRaycastLength,
+						KickStarter.settingsManager.hotspotRaycastLength,
 						1 << LayerMask.NameToLayer (KickStarter.settingsManager.hotspotLayer)
 						);
 				}
@@ -232,7 +241,7 @@ namespace AC
 					hit = UnityVersionHandler.Perform2DRaycast (
 						Camera.main.ScreenToWorldPoint (pos),
 						Vector2.zero,
-						KickStarter.settingsManager.navMeshRaycastLength,
+						KickStarter.settingsManager.hotspotRaycastLength,
 						1 << LayerMask.NameToLayer (KickStarter.settingsManager.hotspotLayer)
 						);
 				}
@@ -268,7 +277,7 @@ namespace AC
 							{
 								return (CheckHotspotValid (hitHotspot));
 							}
-							else if (KickStarter.player.hotspotDetector && KickStarter.player.hotspotDetector.IsHotspotInTrigger (hitHotspot))
+							else if (KickStarter.player != null && KickStarter.player.hotspotDetector != null && KickStarter.player.hotspotDetector.IsHotspotInTrigger (hitHotspot))
 							{
 								return (CheckHotspotValid (hitHotspot));
 							}
@@ -365,21 +374,24 @@ namespace AC
 							KickStarter.playerMenus.CloseInteractionMenus ();
 						}*/
 
-						if (KickStarter.playerInput.GetMouseState () == MouseState.SingleClick || !KickStarter.settingsManager.CanClickOffInteractionMenu ())
+						if (KickStarter.settingsManager.cancelInteractions != CancelInteractions.ViaScriptOnly)
 						{
-							if (KickStarter.settingsManager.inputMethod == InputMethod.TouchScreen)
+							if (KickStarter.playerInput.GetMouseState () == MouseState.SingleClick || !KickStarter.settingsManager.CanClickOffInteractionMenu ())
 							{
-								if (hotspot == null)
+								if (KickStarter.settingsManager.inputMethod == InputMethod.TouchScreen)
+								{
+									if (hotspot == null)
+									{
+										KickStarter.playerMenus.CloseInteractionMenus ();
+									}
+								}
+								if (hotspot != null)
 								{
 									KickStarter.playerMenus.CloseInteractionMenus ();
 								}
 							}
-							if (hotspot != null)
-							{
-								KickStarter.playerMenus.CloseInteractionMenus ();
-							}
 						}
-						
+
 						lastHotspot = hotspot = newHotspot;
 						hotspot.Select ();
 					}
@@ -429,19 +441,21 @@ namespace AC
 									return;
 								}
 
-								//KickStarter.playerMenus.SetInteractionMenus (true);
-								KickStarter.playerMenus.EnableInteractionMenus (hotspot);
-								
-								if (KickStarter.settingsManager.seeInteractions == SeeInteractions.ClickOnHotspot)
+								if (KickStarter.settingsManager.seeInteractions != SeeInteractions.ViaScriptOnly)
 								{
-									if (KickStarter.settingsManager.stopPlayerOnClickHotspot && KickStarter.player)
+									KickStarter.playerMenus.EnableInteractionMenus (hotspot);
+								
+									if (KickStarter.settingsManager.seeInteractions == SeeInteractions.ClickOnHotspot)
 									{
-										KickStarter.player.EndPath ();
+										if (KickStarter.settingsManager.stopPlayerOnClickHotspot && KickStarter.player)
+										{
+											KickStarter.player.EndPath ();
+										}
+										
+										hotspotMovingTo = null;
+										StopInteraction ();
+										KickStarter.runtimeInventory.SetNull ();
 									}
-									
-									hotspotMovingTo = null;
-									StopInteraction ();
-									KickStarter.runtimeInventory.SetNull ();
 								}
 							}
 						}

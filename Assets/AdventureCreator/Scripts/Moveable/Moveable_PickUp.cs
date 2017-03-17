@@ -41,7 +41,6 @@ namespace AC
 		/** The Interaction to run whenever the object is picked up by the player */
 		public Interaction interactionOnGrab;
 
-		private bool preRotationCursorLock;
 		private bool isChargingThrow = false;
 		private float throwCharge = 0f;
 		private float chargeStartTime;
@@ -209,13 +208,12 @@ namespace AC
 			{
 				if (on)
 				{
-					preRotationCursorLock = KickStarter.playerInput.cursorIsLocked;
-					KickStarter.playerInput.cursorIsLocked = false;
+					KickStarter.playerInput.forceGameplayCursor = ForceGameplayCursor.KeepUnlocked;
 					fixedJoint.connectedBody = null;
 				}
 				else
 				{
-					KickStarter.playerInput.cursorIsLocked = preRotationCursorLock;
+					KickStarter.playerInput.forceGameplayCursor = ForceGameplayCursor.None;
 				}
 			}
 
@@ -359,6 +357,12 @@ namespace AC
 				}
 			}
 
+		}
+
+
+		private void OnCollisionEnter (Collision collision)
+		{
+			BaseOnCollisionEnter (collision);
 		}
 		
 		

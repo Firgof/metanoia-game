@@ -40,14 +40,26 @@ namespace AC
 			{
 				Conversation conversation = GetComponent <Conversation>();
 
-				bool[] optionStates = conversation.GetOptionStates ();
-				conversationData._optionStates = ArrayToString <bool> (optionStates);
+				List<bool> optionStates = new List<bool>();
+				List<bool> optionLocks = new List<bool>();
+				List<bool> optionChosens = new List<bool>();
+				List<string> optionLabels = new List<string>();
+				List<int> optionLineIDs = new List<int>();
 
-				bool[] optionLocks = conversation.GetOptionLocks ();
-				conversationData._optionLocks = ArrayToString <bool> (optionLocks);
+				foreach (ButtonDialog _option in conversation.options)
+				{
+					optionStates.Add (_option.isOn);
+					optionLocks.Add (_option.isLocked);
+					optionChosens.Add (_option.hasBeenChosen);
+					optionLabels.Add (_option.label);
+					optionLineIDs.Add (_option.lineID);
+				}
 
-				bool[] optionChosens = conversation.GetOptionChosens ();
-				conversationData._optionChosens = ArrayToString <bool> (optionChosens);
+				conversationData._optionStates = ArrayToString <bool> (optionStates.ToArray ());
+				conversationData._optionLocks = ArrayToString <bool> (optionLocks.ToArray ());
+				conversationData._optionChosens = ArrayToString <bool> (optionChosens.ToArray ());
+				conversationData._optionLabels = ArrayToString <string> (optionLabels.ToArray ());
+				conversationData._optionLineIDs = ArrayToString <int> (optionLineIDs.ToArray ());
 
 				conversationData.lastOption = conversation.lastOption;
 			}
@@ -70,13 +82,38 @@ namespace AC
 				Conversation conversation = GetComponent <Conversation>();
 
 				bool[] optionStates = StringToBoolArray (data._optionStates);
-				conversation.SetOptionStates (optionStates);
-
 				bool[] optionLocks = StringToBoolArray (data._optionLocks);
-				conversation.SetOptionLocks (optionLocks);
-
 				bool[] optionChosens = StringToBoolArray (data._optionChosens);
-				conversation.SetOptionChosens (optionChosens);
+				string[] optionLabels = StringToStringArray (data._optionLabels);
+				int[] optionLineIDs = StringToIntArray (data._optionLineIDs);
+
+				for (int i=0; i<conversation.options.Count; i++)
+				{
+					if (optionStates != null && optionStates.Length > i)
+					{
+						conversation.options[i].isOn = optionStates[i];
+					}
+
+					if (optionLocks != null && optionLocks.Length > i)
+					{
+						conversation.options[i].isLocked = optionLocks[i];
+					}
+
+					if (optionChosens != null && optionChosens.Length > i)
+					{
+						conversation.options[i].hasBeenChosen = optionChosens[i];
+					}
+
+					if (optionLabels != null && optionLabels.Length > i)
+					{
+						conversation.options[i].label = optionLabels[i];
+					}
+
+					if (optionLineIDs != null && optionLineIDs.Length > i)
+					{
+						conversation.options[i].lineID = optionLineIDs[i];
+					}
+				}
 
 				conversation.lastOption = data.lastOption;
 			}
@@ -100,6 +137,10 @@ namespace AC
 		public string _optionChosens;
 		/** The index of the last-chosen option */
 		public int lastOption;
+		/** The labels of each DialogOption */
+		public string _optionLabels;
+		/** The line IDs of each DialogOption */
+		public string _optionLineIDs;
 
 		/**
 		 * The default Constructor.

@@ -34,6 +34,7 @@ namespace AC
 		private bool saveAfterCutscene = false;
 
 		private int playerIDOnStartQueue;
+		private bool noPlayerOnStartQueue;
 		private List<ActiveList> activeLists = new List<ActiveList>();
 
 
@@ -96,11 +97,23 @@ namespace AC
 				}
 			}
 
-			// Set correct Player prefab
-			if (KickStarter.player != null && playerIDOnStartQueue != KickStarter.player.ID && playerIDOnStartQueue >= 0)
+			// Set correct Player prefab before skipping
+			if (KickStarter.settingsManager.playerSwitching == PlayerSwitching.Allow)
 			{
-				Player playerToRevertTo = KickStarter.settingsManager.GetPlayer (playerIDOnStartQueue);
-				KickStarter.ResetPlayer (playerToRevertTo, playerIDOnStartQueue, true, Quaternion.identity, false, true);
+				if (KickStarter.player != null && !noPlayerOnStartQueue && playerIDOnStartQueue != KickStarter.player.ID && playerIDOnStartQueue >= 0)
+				{
+					Player playerToRevertTo = KickStarter.settingsManager.GetPlayer (playerIDOnStartQueue);
+					KickStarter.ResetPlayer (playerToRevertTo, playerIDOnStartQueue, true, Quaternion.identity, false, true);
+				}
+				else if (KickStarter.player != null && noPlayerOnStartQueue)
+				{
+					KickStarter.ResetPlayer (null, KickStarter.settingsManager.GetEmptyPlayerID (), true, Quaternion.identity, false, true);
+				}
+				else if (KickStarter.player == null && !noPlayerOnStartQueue && playerIDOnStartQueue >= 0)
+				{
+					Player playerToRevertTo = KickStarter.settingsManager.GetPlayer (playerIDOnStartQueue);
+					KickStarter.ResetPlayer (playerToRevertTo, playerIDOnStartQueue, true, Quaternion.identity, false, true);
+				}
 			}
 
 			for (int i=0; i<activeLists.Count; i++)
@@ -646,10 +659,12 @@ namespace AC
 				if (KickStarter.player)
 				{
 					playerIDOnStartQueue = KickStarter.player.ID;
+					noPlayerOnStartQueue = false;
 				}
 				else
 				{
-					playerIDOnStartQueue = -1;
+					//playerIDOnStartQueue = -1;
+					noPlayerOnStartQueue = true;
 				}
 				return true;
 			}

@@ -162,9 +162,12 @@ namespace AC
 		public int headLayer = 1;
 		/** The Mecanim layer used to play mouth animations while talking, by AnimEngine_Mecanim / AnimEngine_SpritesUnity */
 		public int mouthLayer = 2;
-		
+		/** The Mecanim Animator component, which will be assigned automatically if not set manually */
+		public Animator customAnimator;
+
+
 		// 2D variables
-		
+
 		private Animator _animator;
 		
 		/** The sprite Transform, that's a child GameObject, used by AnimEngine_SpritesUnity / AnimEngine_SpritesUnityComplex / AnimEngine_Sprites2DToolkit */
@@ -230,7 +233,7 @@ namespace AC
 		protected float pathfindUpdateTime = 0f;
 		/** If True, then the character is mid-jump */
 		public bool isJumping = false;
-		
+
 		private float sortingMapScale = 1f;
 		private bool isReversing = false;
 		protected float turnFloat = 0f;
@@ -241,6 +244,7 @@ namespace AC
 		private bool isExactLerping;
 		private Vector3 newVel;
 		private float nonFacingFactor = 1f;
+		private Paths ownPath;
 
 		// Rigidbody variables
 		
@@ -316,8 +320,11 @@ namespace AC
 		public HeadFacing headFacing = HeadFacing.None;
 		/** If True, then inverse-kinematics will be used to turn the character's head dynamically, rather than playing pre-made animations */
 		public bool ikHeadTurning = false;
+		/** The speed of head-turning */
+		public float headTurnSpeed = 4f;
 
 		private Vector3 defaultExactDestination = new Vector3 (0f, 0f, 1234.5f);
+		private Sound speechSound;
 
 
 		protected void _Awake ()
@@ -353,6 +360,11 @@ namespace AC
 				wallRayOrigin = boxCollider.bounds.center;
 				wallRayForward = boxCollider.bounds.size.x / 2f;
 			}
+
+			if (GetComponent <Paths>())
+			{
+				ownPath = GetComponent <Paths>();
+			}
 			
 			if (GetComponentInChildren <FollowSortingMap>())
 			{
@@ -364,6 +376,11 @@ namespace AC
 			if (GetComponent <LipSyncTexture>())
 			{
 				lipSyncTexture = GetComponent <LipSyncTexture>();
+			}
+
+			if (GetComponent <Sound>())
+			{
+				speechSound = GetComponent <Sound>();
 			}
 			
 			ResetAnimationEngine ();
@@ -419,7 +436,7 @@ namespace AC
 				_collider = GetComponent <Collider>();
 			}
 
-			AdvGame.AssignMixerGroup (speechAudioSource, SoundType.Speech, true);
+			AdvGame.AssignMixerGroup (speechAudioSource, SoundType.Speech);
 			AdvGame.AssignMixerGroup (audioSource, SoundType.SFX);
 
 			displayLineID = lineID;
@@ -536,7 +553,7 @@ namespace AC
 		 */
 		public void RecalculateActivePathfind ()
 		{
-			if (activePath != null && !pausePath && activePath == GetComponent <Paths>())
+			if (activePath != null && !pausePath && activePath == ownPath)
 			{
 				Vector3 targetPosition = activePath.nodes [activePath.nodes.Count-1];
 				MoveToPoint (targetPosition, isRunning, true);
@@ -809,7 +826,6 @@ namespace AC
 					{
 						newVel = Vector3.zero;
 					}
-
 					if (moveSpeed > 0f && rootMotionType != RootMotionType.ThreeD)
 					{
 						newVel = moveDirection * moveSpeed * walkSpeedScale * sortingMapScale;
@@ -1368,6 +1384,10 @@ namespace AC
 				{
 					_animator = spriteChild.GetComponent <Animator>();
 				}
+				else if (customAnimator != null)
+				{
+					_animator = customAnimator;
+				}
 				else if (GetComponent <Animator>())
 				{
 					_animator = GetComponent <Animator>();
@@ -1470,12 +1490,22 @@ namespace AC
 		}
 
 
+		public bool IsPathfinding ()
+		{
+			if (activePath != null && activePath == ownPath)
+			{
+				return true;
+			}
+			return false;
+		}
+
+
 		/**
 		 * <summary>Stops the character from moving along the current Paths object.</summary>
 		 */
 		public void EndPath ()
 		{
-			if (GetComponent <Paths>() && activePath == GetComponent <Paths>())
+			if (IsPathfinding ())
 			{
 				activePath.nodes.Clear ();
 			}
@@ -1523,8 +1553,7 @@ namespace AC
 		 */
 		public void Halt ()
 		{
-			if (GetComponent <Paths>() && activePath == GetComponent <Paths>()) {}
-			else
+			if (!IsPathfinding ())
 			{
 				lastPathPrevNode = prevNode;
 				lastPathTargetNode = targetNode;
@@ -1680,7 +1709,7 @@ namespace AC
 		
 		private bool CanTurnBeforeMoving ()
 		{
-			if (turnBeforeWalking && activePath == GetComponent <Paths>() && targetNode <= 1 && activePath.nodes.Count > 1)
+			if (turnBeforeWalking && IsPathfinding () && targetNode <= 1 && activePath.nodes.Count > 1)
 			{
 				return true;
 			}
@@ -1898,7 +1927,7 @@ namespace AC
 				return;
 			}
 
-			Paths path = GetComponent <Paths>();
+			Paths path = ownPath;
 			if (path)
 			{
 				path.BuildNavPath (pointData);
@@ -2618,12 +2647,12 @@ namespace AC
 		{
 			if (headFacing == HeadFacing.None || headTurnTarget == null)
 			{
-				targetHeadAngles = Vector2.Lerp (targetHeadAngles, Vector2.zero, Time.deltaTime * 4f);
-				headTurnWeight = Mathf.Lerp (headTurnWeight, 0f, Time.deltaTime * 4f);
+				targetHeadAngles = Vector2.Lerp (targetHeadAngles, Vector2.zero, Time.deltaTime * headTurnSpeed);
+				headTurnWeight = Mathf.Lerp (headTurnWeight, 0f, Time.deltaTime * headTurnSpeed);
 			}
 			else
 			{
-				headTurnWeight = Mathf.Lerp (headTurnWeight, 1f, Time.deltaTime * 4f);
+				headTurnWeight = Mathf.Lerp (headTurnWeight, 1f, Time.deltaTime * headTurnSpeed);
 				
 				// Horizontal
 				Vector3 pointForward = headTurnTarget.position + headTurnTargetOffset - transform.position;
@@ -2677,16 +2706,16 @@ namespace AC
 			}
 		}
 		
-		
+
 		private void AnimateHeadTurn ()
 		{
 			if (targetHeadAngles.x == 0f && KickStarter.stateHandler != null && KickStarter.stateHandler.gameState == GameState.Normal)
 			{
-				actualHeadAngles = Vector2.Lerp (actualHeadAngles, targetHeadAngles, Time.deltaTime * 3f);
+				actualHeadAngles = Vector2.Lerp (actualHeadAngles, targetHeadAngles, Time.deltaTime * headTurnSpeed * 0.75f);
 			}
 			else
 			{
-				actualHeadAngles = Vector2.Lerp (actualHeadAngles, targetHeadAngles, Time.deltaTime * 5f);
+				actualHeadAngles = Vector2.Lerp (actualHeadAngles, targetHeadAngles, Time.deltaTime * headTurnSpeed * 1.25f);
 			}
 			
 			if (!ikHeadTurning)
@@ -3117,8 +3146,8 @@ namespace AC
 			{
 				return false;
 			}
-			
-			if (_collider != null)
+
+			if (_collider != null && _collider.enabled)
 			{
 				return Physics.CheckCapsule (transform.position + new Vector3 (0f, _collider.bounds.size.y, 0f), transform.position + new Vector3 (0f, _collider.bounds.size.x / 4f, 0f), _collider.bounds.size.x / 2f);
 			}
@@ -3126,6 +3155,18 @@ namespace AC
 			if (spriteChild != null)
 			{
 				return !isJumping;
+			}
+
+			if (KickStarter.settingsManager.movementMethod == MovementMethod.FirstPerson)
+			{
+				CapsuleCollider[] capsuleColliders = GetComponentsInChildren <CapsuleCollider>();
+				foreach (CapsuleCollider capsuleCollider in capsuleColliders)
+				{
+					if (!capsuleCollider.isTrigger && capsuleCollider.enabled)
+					{
+						return Physics.CheckCapsule (transform.position + new Vector3 (0f, capsuleCollider.bounds.size.y, 0f), transform.position + new Vector3 (0f, _collider.bounds.size.x / 4f, 0f), capsuleCollider.bounds.size.x / 2f);
+					}
+				}
 			}
 			
 			return false;
@@ -3154,18 +3195,32 @@ namespace AC
 		
 		/**
 		 * <summary>Gets the character's destination when walking along a path.</summary>
-		 * <returns>The character's destination when walking along a path</returns>
+		 * <param name = "wantFinalDestination">If True, the paths' end-point will be returned; otherwise, the current node target position will be returned.</param>
+		 * <returns>The character's destination when walking along a path. If not moving along a path, the character's position will be returned.</returns>
 		 */
-		public Vector3 GetTargetPosition ()
+		public Vector3 GetTargetPosition (bool wantFinalDestination = false)
 		{
-			if (activePath && targetNode >= 0 && activePath.nodes.Count > targetNode)
+			if (activePath)
 			{
-				return activePath.nodes[targetNode];
+				if (wantFinalDestination)
+				{
+					if (activePath.nodes.Count > 0)
+					{
+						return activePath.nodes [activePath.nodes.Count-1];
+					}
+				}
+				else
+				{
+					if (targetNode >= 0 && activePath.nodes.Count > targetNode)
+					{
+						return activePath.nodes[targetNode];
+					}
+				}
 			}
 			return transform.position;
 		}
-		
-		
+
+
 		/**
 		 * <summary>Gets the character's target rotation.</summary>
 		 * <returns>The character's target rotation</returns>
@@ -3305,6 +3360,28 @@ namespace AC
 			}
 		}
 
+
+		/**
+		 * <summary>Updates the volume level of the Character's speech audio.</summary>
+		 * <param name = "volume">The new volume level</param>
+		 */
+		public void SetSpeechVolume (float volume)
+		{
+			if (speechSound != null)
+			{
+				speechSound.SetVolume (volume);
+			}
+			else if (speechAudioSource != null)
+			{
+				#if UNITY_5
+				if (KickStarter.settingsManager.volumeControl == VolumeControl.AudioMixerGroups)
+				{
+					return;
+				}
+				#endif
+				speechAudioSource.volume = volume;
+			}
+		}
 
 	}
 }

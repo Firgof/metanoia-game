@@ -221,12 +221,12 @@ namespace AC
 			MenuSource source = menu.menuSource;
 			EditorGUILayout.BeginVertical ("Button");
 
-			fixedOption = EditorGUILayout.Toggle ("Fixed option number?", fixedOption);
+			fixedOption = EditorGUILayout.ToggleLeft ("Fixed Save ID only?", fixedOption);
 			if (fixedOption)
 			{
 				numSlots = 1;
 				slotSpacing = 0f;
-				optionToShow = EditorGUILayout.IntField ("Option to display:", optionToShow);
+				optionToShow = EditorGUILayout.IntField ("ID to display:", optionToShow);
 			}
 			else
 			{
@@ -348,7 +348,14 @@ namespace AC
 				parameterID = Action.ChooseParameterGUI ("", actionListOnSave.parameters, parameterID, ParameterType.Integer);
 				if (parameterID >= 0)
 				{
-					EditorGUILayout.LabelField ("(= Slot index)");
+					if (fixedOption)
+					{
+						EditorGUILayout.LabelField ("(= Save ID #)");
+					}
+					else
+					{
+						EditorGUILayout.LabelField ("(= Slot index)");
+					}
 				}
 				EditorGUILayout.EndHorizontal ();
 				EditorGUILayout.EndVertical ();
@@ -578,20 +585,36 @@ namespace AC
 
 			if (isSuccess)
 			{
-				if (saveListType == AC_SaveListType.Save)
+				if (autoHandle)
 				{
-					_menu.TurnOff (true);
-				}
-				else if (saveListType == AC_SaveListType.Load)
-				{
-					_menu.TurnOff (false);
+					if (saveListType == AC_SaveListType.Save)
+					{
+						_menu.TurnOff (true);
+					}
+					else if (saveListType == AC_SaveListType.Load)
+					{
+						_menu.TurnOff (false);
+					}
 				}
 
-				AdvGame.RunActionListAsset (actionListOnSave, parameterID, _slot);
+				RunActionList (_slot);
 			}
 			else if (!autoHandle && saveListType != AC_SaveListType.Import)
 			{
-				AdvGame.RunActionListAsset (actionListOnSave, parameterID, _slot);
+				RunActionList (_slot);
+			}
+		}
+
+
+		private void RunActionList (int _slot)
+		{
+			if (fixedOption)
+			{
+				AdvGame.RunActionListAsset (actionListOnSave, parameterID, optionToShow);
+			}
+			else
+			{
+				AdvGame.RunActionListAsset (actionListOnSave, parameterID, _slot + offset);
 			}
 		}
 
@@ -743,6 +766,8 @@ namespace AC
 		 */
 		public override void Shift (AC_ShiftInventory shiftType, int amount)
 		{
+			if (fixedOption) return;
+
 			if (isVisible && numSlots >= maxSlots)
 			{
 				Shift (shiftType, maxSlots, GetNumFilledSlots (), amount);

@@ -62,7 +62,7 @@ namespace AC
 	public enum HotspotDetection { MouseOver, PlayerVicinity };
 	public enum HotspotsInVicinity { NearestOnly, CycleMultiple, ShowAll };
 	public enum PlayerAction { DoNothing, TurnToFace, WalkTo, WalkToMarker };
-	public enum CancelInteractions { CursorLeavesMenuOrHotspot, CursorLeavesMenu, ClickOffMenu };
+	public enum CancelInteractions { CursorLeavesMenuOrHotspot, CursorLeavesMenu, ClickOffMenu, ViaScriptOnly };
 	
 	public enum InventoryInteractions { Multiple, Single };
 	public enum InventoryActiveEffect { None, Simple, Pulse };
@@ -85,7 +85,8 @@ namespace AC
 	public enum AC_2DFrameFlipping { None, LeftMirrorsRight, RightMirrorsLeft };
 	public enum FadeType { fadeIn, fadeOut };
 	public enum SortingMapType { SortingLayer, OrderInLayer };
-	
+	public enum SortingMapScaleType { Linear, AnimationCurve };
+
 	public enum CameraLocConstrainType { TargetX, TargetZ, TargetAcrossScreen, TargetIntoScreen, SideScrolling, TargetHeight };
 	public enum CameraRotConstrainType { TargetX, TargetZ, TargetAcrossScreen, TargetIntoScreen, LookAtTarget };
 	
@@ -111,6 +112,7 @@ namespace AC
 	public enum SetVarMethod { SetValue, IncreaseByValue, SetAsRandom, Formula };
 	public enum SetVarMethodString { EnteredHere=0, SetAsMenuElementText=1 };
 	public enum SetVarMethodIntBool { EnteredHere=0, SetAsMecanimParameter=1 };
+	public enum SetParamMethod { EnteredHere=0, CopiedFromGlobalVariable=1 };
 	public enum GetVarMethod { EnteredValue, GlobalVariable, LocalVariable };
 	
 	public enum AC_Direction { None, Up, Down, Left, Right };
@@ -160,7 +162,7 @@ namespace AC
 	public enum PositionRelativeTo { Nothing, RelativeToActiveCamera, RelativeToPlayer };
 
 	public enum CursorRendering { Software, Hardware };
-	public enum SeeInteractions { ClickOnHotspot, CursorOverHotspot };
+	public enum SeeInteractions { ClickOnHotspot, CursorOverHotspot, ViaScriptOnly };
 	public enum SelectInteractions { ClickingMenu, CyclingMenuAndClickingHotspot, CyclingCursorAndClickingHotspot };
 	public enum ChooseSceneBy { Number, Name };
 	public enum ChangeType { Enable, Disable };
@@ -184,9 +186,9 @@ namespace AC
 	public enum DoubleClickingHotspot { MakesPlayerRun, TriggersInteractionInstantly, DoesNothing };
 	public enum BoolCondition { EqualTo, NotEqualTo };
 
-	public enum ManageProfileType { CreateProfile, DeleteProfile, RenameProfile };
-	public enum DeleteProfileType { ActiveProfile, SetSlotIndex, SlotIndexFromVariable };
-	public enum SaveCheck { NumberOfSaveGames, NumberOfProfiles, IsSavingPossible, IsSlotEmpty };
+	public enum ManageProfileType { CreateProfile, DeleteProfile, RenameProfile, SwitchActiveProfile };
+	public enum DeleteProfileType { ActiveProfile, SetSlotIndex, SlotIndexFromVariable, SetProfileID };
+	public enum SaveCheck { NumberOfSaveGames, NumberOfProfiles, IsSavingPossible, IsSlotEmpty, DoesProfileExist };
 	public enum ManageSaveType { DeleteSave, RenameSave };
 	public enum SelectSaveType { Autosave, SetSlotIndex, SlotIndexFromVariable };
 	public enum SaveHandling { LoadGame, ContinueFromLastSave, OverwriteExistingSave, SaveNewGame };
@@ -226,5 +228,6 @@ namespace AC
 	public enum TriggerReacts { OnlyDuringGameplay, OnlyDuringCutscenes, DuringCutscenesAndGameplay };
 	public enum MovieMaterialMethod { PlayMovie, PauseMovie, StopMovie };
 	public enum FirstPersonHeadBobMethod { BuiltIn, CustomAnimation, CustomScript };
+	public enum ForceGameplayCursor { None, KeepLocked, KeepUnlocked };
 
 }

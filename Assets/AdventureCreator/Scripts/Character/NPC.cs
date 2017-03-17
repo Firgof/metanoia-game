@@ -37,6 +37,7 @@ namespace AC
 		private float followDistance = 0f;
 		private float followDistanceMax = 0f;
 		private bool followFaceWhenIdle = false;
+		private bool followRandomDirection = false;
 
 		private LayerMask LayerOn;
 		private LayerMask LayerOff;
@@ -218,6 +219,10 @@ namespace AC
 					
 					if (KickStarter.navigationManager)
 					{
+						if (followRandomDirection)
+						{
+							targetPosition = KickStarter.navigationManager.navigationEngine.GetPointNear (targetPosition, followDistance, followDistanceMax);
+						}
 						pointArray = KickStarter.navigationManager.navigationEngine.GetPointsArray (transform.position, targetPosition, this);
 					}
 					else
@@ -246,9 +251,12 @@ namespace AC
 
 			if (dist < followDistance)
 			{
-				EndPath ();
+				if (!followRandomDirection)
+				{
+					EndPath ();
+				}
 
-				if (followFaceWhenIdle)
+				if (activePath == null && followFaceWhenIdle)
 				{
 					Vector3 _lookDirection = followTarget.transform.position - transform.position;
 					SetLookDirection (_lookDirection, false);
@@ -298,7 +306,7 @@ namespace AC
 		 * <param name = "_followDistanceMax">The maximum distance to keep from the target</param>
 		 * <param name = "_faceWhenIdle">If True, the NPC will face the target when idle</param>
 		 */
-		public void FollowAssign (Char _followTarget, bool _followTargetIsPlayer, float _followFrequency, float _followDistance, float _followDistanceMax, bool _faceWhenIdle)
+		public void FollowAssign (Char _followTarget, bool _followTargetIsPlayer, float _followFrequency, float _followDistance, float _followDistanceMax, bool _faceWhenIdle, bool _followRandomDirection)
 		{
 			if (_followTargetIsPlayer)
 			{
@@ -317,6 +325,7 @@ namespace AC
 			followDistance = _followDistance;
 			followDistanceMax = _followDistanceMax;
 			followFaceWhenIdle = _faceWhenIdle;
+			followRandomDirection = _followRandomDirection;
 
 			FollowUpdate ();
 		}
@@ -453,6 +462,7 @@ namespace AC
 						npcData.followDistance = followDistance;
 						npcData.followDistanceMax = followDistanceMax;
 						npcData.followFaceWhenIdle = followFaceWhenIdle;
+						npcData.followRandomDirection = followRandomDirection;
 					}
 					else
 					{
@@ -466,7 +476,9 @@ namespace AC
 					npcData.followFrequency = followFrequency;
 					npcData.followDistance = followDistance;
 					npcData.followDistanceMax = followDistanceMax;
-					followFaceWhenIdle = false;
+					//followFaceWhenIdle = false;
+					npcData.followFaceWhenIdle = followFaceWhenIdle;
+					npcData.followRandomDirection = followRandomDirection;
 				}
 			}
 			else
@@ -476,6 +488,8 @@ namespace AC
 				npcData.followFrequency = 0f;
 				npcData.followDistance = 0f;
 				npcData.followDistanceMax = 0f;
+				npcData.followFaceWhenIdle = false;
+				npcData.followRandomDirection = false;
 			}
 			
 			if (headFacing == HeadFacing.Manual && headTurnTarget != null)
@@ -621,7 +635,7 @@ namespace AC
 				}
 			}
 			
-			FollowAssign (charToFollow, data.followTargetIsPlayer, data.followFrequency, data.followDistance, data.followDistanceMax, data.followFaceWhenIdle);
+			FollowAssign (charToFollow, data.followTargetIsPlayer, data.followFrequency, data.followDistance, data.followDistanceMax, data.followFaceWhenIdle, data.followRandomDirection);
 			Halt ();
 			
 			if (data.pathData != null && data.pathData != "" && GetComponent <Paths>())

@@ -55,6 +55,10 @@ namespace AC
 		private string fullText;
 		private MenuJournal otherJournal;
 
+		#if UNITY_EDITOR
+		private int sideMenu;
+		#endif
+
 
 		/**
 		 * Initialises the element when it is created within MenuManager.
@@ -220,7 +224,7 @@ namespace AC
 
 				EditorGUILayout.BeginHorizontal ();
 				EditorGUILayout.LabelField ("Placeholder text:", GUILayout.Width (146f));
-				pages[0].text = EditorGUILayout.TextArea (pages[0].text);
+				pages[0].text = EditorGUILayout.TextArea (pages[0].text, GUILayout.MaxWidth (370f));
 				showPage = 1;
 				EditorGUILayout.EndHorizontal ();
 
@@ -252,16 +256,24 @@ namespace AC
 				for (int i=0; i<pages.Count; i++)
 				{
 					EditorGUILayout.BeginHorizontal ();
-					EditorGUILayout.LabelField ("Page #" + (i+1).ToString () + ":");
-					if (GUILayout.Button ("-", GUILayout.Width (20f)))
+
+					if (pages[i].lineID >= 0)
 					{
-						Undo.RecordObject (this, "Delete journal page");
-						pages.RemoveAt (i);
-						break;
+						EditorGUILayout.LabelField ("Page #" + (i+1).ToString () + ", Text ID #" + pages[i].lineID + ":");
+					}
+					else
+					{
+						EditorGUILayout.LabelField ("Page #" + (i+1).ToString () + ":");
+					}
+
+					if (GUILayout.Button (Resource.CogIcon, GUILayout.Width (20f), GUILayout.Height (15f)))
+					{
+						sideMenu = i;
+						SideMenu ();
 					}
 					EditorGUILayout.EndHorizontal ();
 
-					pages[i].text = EditorGUILayout.TextArea (pages[i].text);
+					pages[i].text = EditorGUILayout.TextArea (pages[i].text, GUILayout.MaxWidth (370f));
 					GUILayout.Box ("", GUILayout.ExpandWidth (true), GUILayout.Height(1));
 				}
 
@@ -303,6 +315,103 @@ namespace AC
 			EditorGUILayout.EndVertical ();
 			
 			base.ShowGUI (menu);
+		}
+
+
+		private void SideMenu ()
+		{
+			GenericMenu menu = new GenericMenu ();
+
+			menu.AddItem (new GUIContent ("Insert after"), false, MenuCallback, "Insert after");
+			if (pages.Count > 1)
+			{
+				menu.AddItem (new GUIContent ("Delete"), false, MenuCallback, "Delete");
+			}
+
+			menu.AddSeparator ("");
+
+			if (sideMenu > 0 || sideMenu <pages.Count-1)
+			{
+				menu.AddSeparator ("");
+				if (sideMenu > 0)
+				{
+					menu.AddItem (new GUIContent ("Move to top"), false, MenuCallback, "Move to top");
+					menu.AddItem (new GUIContent ("Move up"), false, MenuCallback, "Move up");
+				}
+				if (sideMenu < pages.Count-1)
+				{
+					menu.AddItem (new GUIContent ("Move down"), false, MenuCallback, "Move down");
+					menu.AddItem (new GUIContent ("Move to bottom"), false, MenuCallback, "Move to bottom");
+				}
+			}
+			
+			menu.ShowAsContext ();
+		}
+
+
+		private void MenuCallback (object obj)
+		{
+			if (sideMenu >= 0)
+			{
+				switch (obj.ToString ())
+				{
+				case "Insert after":
+					Undo.RecordObject (this, "Insert journal page");
+					pages.Insert (sideMenu+1, new JournalPage ());
+					break;
+					
+				case "Delete":
+					Undo.RecordObject (this, "Delete journal page");
+					pages.RemoveAt (sideMenu);
+					break;
+					
+				case "Move up":
+					Undo.RecordObject (this, "Move page up");
+					SwapPages (sideMenu, sideMenu-1);
+					break;
+					
+				case "Move down":
+					Undo.RecordObject (this, "Move page down");
+					SwapPages (sideMenu, sideMenu+1);
+					break;
+
+				case "Move to top":
+					Undo.RecordObject (this, "Move page to top");
+					MovePageToTop (sideMenu);
+					break;
+				
+				case "Move to bottom":
+					Undo.RecordObject (this, "Move page to bottom");
+					MovePageToBottom (sideMenu);
+					break;
+				}
+			}
+			
+			sideMenu = -1;
+		}
+
+
+		private void MovePageToTop (int a1)
+		{
+			JournalPage tempPage = pages[a1];
+			pages.Insert (0, tempPage);
+			pages.RemoveAt (a1+1);
+		}
+
+
+		private void MovePageToBottom (int a1)
+		{
+			JournalPage tempPage = pages[a1];
+			pages.Add (tempPage);
+			pages.RemoveAt (a1);
+		}
+		
+
+		private void SwapPages (int a1, int a2)
+		{
+			JournalPage tempPage = pages[a1];
+			pages[a1] = pages[a2];
+			pages[a2] = tempPage;
 		}
 		
 		#endif
@@ -607,10 +716,20 @@ namespace AC
 
 			if (index < 0)
 			{
+				if (pages[pages.Count-1].lineID == -1)
+				{
+					ACDebug.LogWarning ("The removed Journal page has no ID number, and the change will not be included in save game files - this can be corrected by clicking 'Gather text' in the Speech Manager.");
+				}
+
 				pages.RemoveAt (pages.Count-1);
 			}
 			else if (index < pages.Count)
 			{
+				if (pages[index].lineID == -1)
+				{
+					ACDebug.LogWarning ("The removed Journal page has no ID number, and the change will not be included in save game files - this can be corrected by clicking 'Gather text' in the Speech Manager.");
+				}
+
 				pages.RemoveAt (index);
 			}
 			else

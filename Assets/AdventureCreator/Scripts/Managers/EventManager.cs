@@ -200,6 +200,25 @@ namespace AC
 		}
 
 
+		// Variables
+
+		/** A delegate for the OnVariableChange event */
+		public delegate void Delegate_OnVariableChange (GVar variable);
+		/** An event triggered whenever a Variable is changed via an Action */
+		public static Delegate_OnVariableChange OnVariableChange;
+
+		/**
+		 * <summary>Triggers the OnVariableChange event.</summary>
+		 * <param name = "_variable">The variable that was changed</param>
+		 */
+		public void Call_OnVariableChange (GVar _variable)
+		{
+			if (OnVariableChange != null)
+			{
+				OnVariableChange (_variable);
+			}
+		}
+
 		// Menus
 
 		/** A delegate for the OnMenuElementClick event */
@@ -403,6 +422,8 @@ namespace AC
 		public delegate void Delegate_CombineInventory (InvItem invItem, InvItem invItem2);
 		/** A delegate for the OnInventorySelect and OnInventoryDeselect events */
 		public delegate void Delegate_Inventory (InvItem _int);
+		/** A delegate for the OnContainerAdd and OnContainerRemove events */
+		public delegate void Delegate_Container (Container container, ContainerItem containerItem);
 		/** An event triggered whenever an item is added to the player's inventory */
 		public static Delegate_ChangeInventory OnInventoryAdd;
 		/** An event triggered whenever an item is removed from the player's inventory */
@@ -415,6 +436,11 @@ namespace AC
 		public static Delegate_ChangeInventory OnInventoryInteract;
 		/** An event triggered whenever two inventory items are combined together */
 		public static Delegate_CombineInventory OnInventoryCombine;
+		/** An event triggered whenever an item is added to a Container */
+		public static Delegate_Container OnContainerAdd;
+		/** An event triggered whenever an item is removed from a Container */
+		public static Delegate_Container OnContainerRemove;
+
 
 		/**
 		 * <summary>Triggers either the OnInventoryAdd, OnInventoryRemove, OnInventorySelect or OnInventoryDeselect events.<summary>
@@ -461,6 +487,33 @@ namespace AC
 			else if (OnInventoryInteract != null && combineItem == null)
 			{
 				OnInventoryInteract (invItem, iconID);
+			}
+		}
+
+
+		/**
+		 * <summary>Triggers either the OnContainerAdd or OnContainerRemove events.<summary>
+		 * <param name = "transferringToContainer">If True, an item is being added to a Container; otherwise, it is being removed</param>
+		 * <param name = "container">The Container being manipulated</param>
+		 * <param name = "containerItem">The ContainerItem being moved to/from the Container</param>
+		 */
+		public void Call_OnUseContainer (bool transferringToContainer, Container container, ContainerItem containerItem)
+		{
+			if (containerItem == null || container == null) return;
+
+			if (transferringToContainer)
+			{
+				if (OnContainerAdd != null)
+				{
+					OnContainerAdd (container, containerItem);
+				}
+			}
+			else
+			{
+				if (OnContainerRemove != null)
+				{
+					OnContainerRemove (container, containerItem);
+				}
 			}
 		}
 

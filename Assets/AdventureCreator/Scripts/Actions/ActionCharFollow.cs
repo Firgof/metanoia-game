@@ -41,6 +41,7 @@ namespace AC
 		public float followDistanceMax = 15f;
 		public enum FollowType { StartFollowing, StopFollowing };
 		public FollowType followType;
+		public bool randomDirection = false;
 		
 		
 		public ActionCharFollow ()
@@ -71,7 +72,7 @@ namespace AC
 
 				if (followPlayer || charToFollow != (Char) npcToMove)
 				{
-					npcToMove.FollowAssign (charToFollow, followPlayer, updateFrequency, followDistance, followDistanceMax, faceWhenIdle);
+					npcToMove.FollowAssign (charToFollow, followPlayer, updateFrequency, followDistance, followDistanceMax, faceWhenIdle, randomDirection);
 				}
 			}
 
@@ -128,6 +129,7 @@ namespace AC
 
 				}
 
+				randomDirection = EditorGUILayout.Toggle ("Randomise position?", randomDirection);
 				updateFrequency = EditorGUILayout.FloatField ("Update frequency (s):", updateFrequency);
 				if (updateFrequency == 0f || updateFrequency < 0f)
 				{

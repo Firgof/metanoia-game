@@ -1,7 +1,7 @@
 /*
  *
  *	Adventure Creator
- *	by Chris Burton, 2013-2016
+ *	by Chris Burton, 2013-2017
  *	
  *	"PlayerInput.cs"
  * 
@@ -41,6 +41,7 @@ namespace AC
 		private bool isLeftLocked = false;
 		private bool isRightLocked = false;
 		private bool freeAimLock = false;
+		private bool isJumpLocked = false;
 
 		/** If True, Menus can be controlled via the keyboard or controller during gameplay (if SettingsManager.inputMethod = InputMethod.KeyboardOrController */
 		[HideInInspector] public bool canKeyboardControlMenusDuringGameplay = false;
@@ -50,7 +51,7 @@ namespace AC
 		[HideInInspector] public string skipMovieKey = "";
 		/** The minimum duration, in seconds, that can elapse between mouse clicks */
 		public float clickDelay = 0.3f;
-		/**<The maximum duration, in seconds, between two successive mouse clicks to register a "double-click" */
+		/** The maximum duration, in seconds, between two successive mouse clicks to register a "double-click" */
 		public float doubleClickDelay = 1f;
 
 		private int selected_option;
@@ -84,15 +85,16 @@ namespace AC
 		
 		// 1st person movement
 		private Vector2 freeAim;
-		/** If True, the mouse cursor will be locked in the centre of the screen, allowing for free-aiming if in First-Person */
-		[HideInInspector] public bool cursorIsLocked = false;
+		private bool toggleCursorOn = false;
+		private bool cursorIsLocked = false;
+		public ForceGameplayCursor forceGameplayCursor = ForceGameplayCursor.None;
 		private bool toggleRun = false;
 		
 		// Draggable
 		private bool canDragMoveable = false;
-		private float cameraInfluence = 100000f;
 		private DragBase dragObject = null;
 		private Vector2 lastMousePosition;
+		private bool resetMouseDelta = false;
 		private Vector3 lastCameraPosition;
 		private Vector3 dragForce;
 		private Vector2 deltaDragMouse;
@@ -137,11 +139,7 @@ namespace AC
 		{
 			if (KickStarter.settingsManager)
 			{
-				cursorIsLocked = KickStarter.settingsManager.lockCursorOnStart;
-				if (cursorIsLocked && !KickStarter.settingsManager.IsInFirstPerson ())
-				{
-					ACDebug.Log ("Starting a non-First Person game with a locked cursor - is this correct?"); 
-				}
+				InitialiseCursorLock (KickStarter.settingsManager.movementMethod);
 			}
 		
 			ResetClick ();
@@ -184,7 +182,7 @@ namespace AC
 			{
 				clickTime = 0f;
 			}
-			
+
 			if (doubleClickTime > 0f)
 			{
 				doubleClickTime -= 4f * GetDeltaTime ();
@@ -201,6 +199,8 @@ namespace AC
 			
 			if (KickStarter.stateHandler && KickStarter.settingsManager)
 			{
+				lastMousePosition = mousePosition;
+
 				if (InputGetButtonDown ("ToggleCursor") && KickStarter.stateHandler.gameState == GameState.Normal)
 				{
 					ToggleCursor ();
@@ -217,33 +217,48 @@ namespace AC
 				if (KickStarter.settingsManager.inputMethod == InputMethod.MouseAndKeyboard)
 				#endif
 				{
-					// Cursor position
-					bool shouldLockCursor = UnityVersionHandler.CursorLock;
-
-					if (!cursorIsLocked || KickStarter.stateHandler.gameState == AC.GameState.Paused || KickStarter.stateHandler.gameState == AC.GameState.DialogOptions || (freeAimLock && KickStarter.settingsManager.IsInFirstPerson ()))
+					// Cursor lock state
+					if (KickStarter.stateHandler.gameState == GameState.Paused ||
+						KickStarter.stateHandler.gameState == GameState.DialogOptions ||
+						(freeAimLock && KickStarter.settingsManager.IsInFirstPerson ()))
 					{
-						shouldLockCursor = false;
-						mousePosition = InputMousePosition (false);
-						freeAim = InputGetFreeAim (false);
+						cursorIsLocked = false;
 					}
-					else if (dragObject != null && KickStarter.settingsManager.IsInFirstPerson () && KickStarter.settingsManager.disableFreeAimWhenDragging)
+					else if (dragObject != null && 
+							 KickStarter.settingsManager.IsInFirstPerson () && 
+							 KickStarter.settingsManager.disableFreeAimWhenDragging)
 					{
-						shouldLockCursor = false;
-						mousePosition = InputMousePosition (false);
-						freeAim = InputGetFreeAim (false);
+						cursorIsLocked = false;
 					}
-					else if (cursorIsLocked && KickStarter.stateHandler.gameState == GameState.Normal)
+					else
 					{
-						if (!shouldLockCursor && dragObject == null)// && KickStarter.settingsManager.IsInFirstPerson ())
+						if (forceGameplayCursor == ForceGameplayCursor.KeepLocked)
 						{
-							shouldLockCursor = true;
+							cursorIsLocked = true;
 						}
-						mousePosition = InputMousePosition (true);
-
-						freeAim = GetSmoothFreeAim (InputGetFreeAim (true));
+						else if (forceGameplayCursor == ForceGameplayCursor.KeepUnlocked)
+						{
+							cursorIsLocked = false;
+						}
+						else
+						{
+							cursorIsLocked = toggleCursorOn;
+						}
 					}
 
-					UnityVersionHandler.CursorLock = shouldLockCursor;
+					UnityVersionHandler.CursorLock = cursorIsLocked;
+
+					// Cursor position
+					if (cursorIsLocked)
+					{
+						mousePosition = InputMousePosition (true);
+ 						freeAim = GetSmoothFreeAim (InputGetFreeAim (true));
+					}
+					else
+					{
+						mousePosition = InputMousePosition (false);
+						freeAim = InputGetFreeAim (false);
+					}
 
 					// Cursor state
 					if (mouseState == MouseState.Normal)
@@ -311,18 +326,15 @@ namespace AC
 						{
 							if (KickStarter.settingsManager.IsFirstPersonDragMovement ())
 							{
-								//freeAim = new Vector2 (dragVector.x * KickStarter.settingsManager.freeAimTouchSpeed, 0f);
 								freeAim = GetSmoothFreeAim (new Vector2 (dragVector.x * KickStarter.settingsManager.freeAimTouchSpeed, 0f));
 							}
 							else
 							{
-								//freeAim = new Vector2 (dragVector.x * KickStarter.settingsManager.freeAimTouchSpeed, -dragVector.y * KickStarter.settingsManager.freeAimTouchSpeed);
 								freeAim = GetSmoothFreeAim (new Vector2 (dragVector.x * KickStarter.settingsManager.freeAimTouchSpeed, -dragVector.y * KickStarter.settingsManager.freeAimTouchSpeed));
 							}
 						}
 						else
 						{
-							//freeAim = Vector2.zero;
 							freeAim = GetSmoothFreeAim (Vector2.zero);
 						}
 					}
@@ -330,7 +342,22 @@ namespace AC
 				else if (KickStarter.settingsManager.inputMethod == InputMethod.TouchScreen)
 				{
 					int touchCount = Input.touchCount;
-					
+
+
+					// Cursor lock state
+					if (forceGameplayCursor == ForceGameplayCursor.KeepLocked)
+					{
+						cursorIsLocked = true;
+					}
+					else if (forceGameplayCursor == ForceGameplayCursor.KeepUnlocked)
+					{
+						cursorIsLocked = false;
+					}
+					else
+					{
+						cursorIsLocked = toggleCursorOn;
+					}
+
 					// Cursor position
 					if (cursorIsLocked)
 					{
@@ -480,29 +507,57 @@ namespace AC
 					{
 						if (KickStarter.settingsManager.IsFirstPersonDragMovement ())
 						{
-							//freeAim = new Vector2 (dragVector.x * KickStarter.settingsManager.freeAimTouchSpeed, 0f);
 							freeAim = GetSmoothFreeAim (new Vector2 (dragVector.x * KickStarter.settingsManager.freeAimTouchSpeed, 0f));
 						}
 						else
 						{
-							//freeAim = new Vector2 (dragVector.x * KickStarter.settingsManager.freeAimTouchSpeed, -dragVector.y * KickStarter.settingsManager.freeAimTouchSpeed);
 							freeAim = GetSmoothFreeAim (new Vector2 (dragVector.x * KickStarter.settingsManager.freeAimTouchSpeed, -dragVector.y * KickStarter.settingsManager.freeAimTouchSpeed));
 						}
 					}
 					else
 					{
-						//freeAim = Vector2.zero; //
 						freeAim = GetSmoothFreeAim (Vector2.zero);
 					}
 				}
 				else if (KickStarter.settingsManager.inputMethod == InputMethod.KeyboardOrController)
 				{
+					// Cursor lock
+					if (freeAimLock && KickStarter.settingsManager.IsInFirstPerson ())
+					{
+						cursorIsLocked = false;
+					}
+					else if (dragObject != null && 
+							 KickStarter.settingsManager.IsInFirstPerson () && 
+							 KickStarter.settingsManager.disableFreeAimWhenDragging)
+					{
+						cursorIsLocked = false;
+					}
+					else if (KickStarter.stateHandler.gameState == GameState.Normal)
+					{
+						if (forceGameplayCursor == ForceGameplayCursor.KeepLocked)
+						{
+							cursorIsLocked = true;
+						}
+						else if (forceGameplayCursor == ForceGameplayCursor.KeepUnlocked)
+						{
+							cursorIsLocked = false;
+						}
+
+						else
+						{
+							cursorIsLocked = toggleCursorOn;
+						}
+					}
+					else
+					{
+						cursorIsLocked = false;
+					}
+
 
 					// Cursor position
-					if (cursorIsLocked && KickStarter.stateHandler.gameState == GameState.Normal)
+					if (cursorIsLocked)
 					{
 						mousePosition = new Vector2 (Screen.width / 2f, Screen.height / 2f);
-						//freeAim = new Vector2 (InputGetAxis ("CursorHorizontal") * 50f, InputGetAxis ("CursorVertical") * 50f);
 						freeAim = GetSmoothFreeAim (new Vector2 (InputGetAxis ("CursorHorizontal") * 50f, InputGetAxis ("CursorVertical") * 50f));
 					}
 					else
@@ -587,7 +642,7 @@ namespace AC
 						}
 					}
 				}
-				
+
 				if (KickStarter.playerInteraction.GetHotspotMovingTo () != null)
 				{
 					freeAim = Vector2.zero;
@@ -619,6 +674,11 @@ namespace AC
 				}
 
 				mousePosition = KickStarter.mainCamera.LimitToAspect (mousePosition);
+				if (resetMouseDelta)
+				{
+					lastMousePosition = mousePosition;
+					resetMouseDelta = false;
+				}
 
 				if (mouseState == MouseState.Normal && !hasUnclickedSinceClick)
 				{
@@ -770,11 +830,16 @@ namespace AC
 		{
 			if (KickStarter.settingsManager.IsInFirstPerson () && movementMethod != MovementMethod.FirstPerson)
 			{
-				cursorIsLocked = false;
+				toggleCursorOn = false;
 			}
-			else if (!KickStarter.settingsManager.IsInFirstPerson () && movementMethod == MovementMethod.FirstPerson)
+			else// if (!KickStarter.settingsManager.IsInFirstPerson () && movementMethod == MovementMethod.FirstPerson)
 			{
-				cursorIsLocked = KickStarter.settingsManager.lockCursorOnStart;
+				toggleCursorOn = KickStarter.settingsManager.lockCursorOnStart;
+
+				if (toggleCursorOn && !KickStarter.settingsManager.IsInFirstPerson ())
+				{
+					ACDebug.Log ("Starting a non-First Person game with a locked cursor - is this correct?"); 
+				}
 			}
 		}
 
@@ -793,7 +858,6 @@ namespace AC
 					{
 						return true;
 					}
-					
 					return KickStarter.settingsManager.CanDragCursor ();
 				}
 			}
@@ -960,13 +1024,13 @@ namespace AC
 					{
 						Vector2 normalizedVector = new Vector2 (InputGetAxis ("Horizontal"), InputGetAxis ("Vertical"));
 
+						if (KickStarter.settingsManager.inputMethod == InputMethod.TouchScreen && dragState == DragState.ScreenArrows)
+						{
+							normalizedVector = GetDragVector () / KickStarter.settingsManager.dragRunThreshold / KickStarter.settingsManager.dragWalkThreshold;
+						}
+
 						if (normalizedVector.sqrMagnitude > 0f)
 						{
-							if (KickStarter.settingsManager.inputMethod == InputMethod.TouchScreen && dragState == DragState.ScreenArrows)
-							{
-								normalizedVector = GetDragVector () / KickStarter.settingsManager.dragRunThreshold / KickStarter.settingsManager.dragWalkThreshold;
-							}
-
 							float threshold = 0.95f;
 							if (KickStarter.settingsManager.inputMethod == InputMethod.MouseAndKeyboard)
 							{
@@ -1043,7 +1107,10 @@ namespace AC
 
 					if (InputGetButtonDown ("Jump") && KickStarter.stateHandler.gameState == GameState.Normal)
 					{
-						KickStarter.player.Jump ();
+						if (!isJumpLocked)
+						{
+							KickStarter.player.Jump ();
+						}
 					}
 					
 					if ((isUpLocked && v > 0f) || (isDownLocked && v < 0f))
@@ -1299,10 +1366,10 @@ namespace AC
 		 */
 		public bool IsCursorLocked ()
 		{
-			return UnityVersionHandler.CursorLock;
+			return cursorIsLocked;
 		}
-		
-		
+
+
 		private void StopSimulatingInput ()
 		{
 			menuButtonInput = "";
@@ -1620,6 +1687,8 @@ namespace AC
 		
 		private void SetDragState ()
 		{
+			DragState oldDragState = dragState;
+
 			if (KickStarter.runtimeInventory.selectedItem != null && KickStarter.settingsManager.inventoryDragDrop && (KickStarter.stateHandler.gameState == GameState.Normal || KickStarter.stateHandler.gameState == GameState.Paused))
 			{
 				if (dragVector.magnitude >= KickStarter.settingsManager.dragDropThreshold)
@@ -1648,7 +1717,8 @@ namespace AC
 				if (!KickStarter.playerInteraction.IsMouseOverHotspot ())
 				{
 					dragState = DragState._Camera;
-					if (deltaDragMouse.magnitude * Time.deltaTime <= 1f && (GetInvertedMouse () - dragStartPosition).magnitude < 10f)
+
+					if (!cursorIsLocked && (deltaDragMouse.magnitude * Time.deltaTime <= 1f) && (GetInvertedMouse () - dragStartPosition).magnitude < 10f)
 					{
 						dragState = DragState.None;
 					}
@@ -1671,6 +1741,12 @@ namespace AC
 			else
 			{
 				dragState = DragState.None;
+			}
+
+			if (oldDragState == DragState.None && dragState != DragState.None)
+			{
+				resetMouseDelta = true;
+				lastMousePosition = mousePosition;
 			}
 		}
 
@@ -1706,8 +1782,8 @@ namespace AC
 				dragState = DragState.None;
 			}
 		}
-		
-		
+
+
 		private void UpdateDrag ()
 		{
 			if (dragState != DragState.None)
@@ -1722,10 +1798,10 @@ namespace AC
 					deltaDragMouse = (mousePosition - lastMousePosition) / Time.deltaTime;
 				}
 			}
-			else
+			/*else
 			{
 				lastMousePosition = mousePosition;
-			}
+			}*/
 
 			if (dragObject && KickStarter.stateHandler.gameState != GameState.Normal)
 			{
@@ -1742,7 +1818,7 @@ namespace AC
 				{
 					if (dragObject.isHeld && dragObject.IsOnScreen () && dragObject.IsCloseToCamera (KickStarter.settingsManager.moveableRaycastLength))
 					{
-						Drag ();
+						//Drag ();
 					}
 					else
 					{
@@ -1755,9 +1831,26 @@ namespace AC
 				LetGo (true);
 			}
 			
-			if (dragState != DragState.None)
+			/*if (dragState != DragState.None)
 			{
 				lastMousePosition = mousePosition;
+			}*/
+		}
+
+
+		public void _FixedUpdate ()
+		{
+			if (mouseState == MouseState.HeldDown && dragState == DragState.None && KickStarter.stateHandler.CanInteract () && !KickStarter.playerMenus.IsMouseOverMenu ())
+			{}
+			else if (dragState == DragState.Moveable)
+			{
+				if (dragObject)
+				{
+					if (dragObject.isHeld && dragObject.IsOnScreen () && dragObject.IsCloseToCamera (KickStarter.settingsManager.moveableRaycastLength))
+					{
+						Drag ();
+					}
+				}
 			}
 		}
 
@@ -1801,7 +1894,7 @@ namespace AC
 					{
 						dragObject = hit.transform.GetComponent <DragBase>();
 						dragObject.Grab (hit.point);
-						lastMousePosition = mousePosition;
+						//lastMousePosition = mousePosition;
 						lastCameraPosition = Camera.main.transform.position;
 
 						KickStarter.eventManager.Call_OnGrabMoveable (dragObject);
@@ -1822,14 +1915,18 @@ namespace AC
 			{
 				dragForce = (Camera.main.transform.right * deltaDragMouse.x) + (Camera.main.transform.up * deltaDragMouse.y);
 			}
-			
+
 			// Scale force with distance to camera, to lessen effects when close
 			float distanceToCamera = (Camera.main.transform.position - dragObject.transform.position).magnitude;
 			
 			// Incoporate camera movement
-			Vector3 deltaCamera = Camera.main.transform.position - lastCameraPosition;
+			if (dragObject.playerMovementInfluence > 0f)
+			{
+				Vector3 deltaCamera = Camera.main.transform.position - lastCameraPosition;
+				dragForce += deltaCamera * 100000f * dragObject.playerMovementInfluence;
+			}
 
-			dragForce += deltaCamera * cameraInfluence;
+			dragForce /= Time.fixedDeltaTime * 50f;
 			dragObject.ApplyDragForce (dragForce, mousePosition, distanceToCamera);
 			
 			lastCameraPosition = Camera.main.transform.position;
@@ -1891,6 +1988,16 @@ namespace AC
 
 
 		/**
+		 * <summary>Enables or disabled the Player's ability to jump.</summary>
+		 * <param name = "state">If True, the "jump" lock is enabled, and the player cannot jump</param>
+		 */
+		public void SetJumpLock (bool state)
+		{
+			isJumpLocked = state;
+		}
+
+
+		/**
 		 * <summary>Checks if the Player can be directly-controlled during gameplay.</summary>
 		 * <returns>True if the Player can be directly-controlled during gameplay.</returns>
 		 */
@@ -1920,7 +2027,17 @@ namespace AC
 			{
 				return;
 			}
-			cursorIsLocked = !cursorIsLocked;
+			toggleCursorOn = !toggleCursorOn;
+		}
+
+
+		/**
+		 * <summary>Sets the lock state of the in-game cursor manually. When locked, the cursor will be placed in the centre of the screen during gameplay.</summary>
+		 * <param name = "lockState">If True, the cursor will be locked during gameplay</param>
+		 */
+		public void SetInGameCursorState (bool lockState)
+		{
+			toggleCursorOn = lockState;
 		}
 		
 
@@ -2185,6 +2302,7 @@ namespace AC
 				mainData.activeConversation = Serializer.GetConstantID (activeConversation.gameObject);
 			}
 			mainData.canKeyboardControlMenusDuringGameplay = canKeyboardControlMenusDuringGameplay;
+			//mainData.toggleCursorState = (toggleCursorOn) ? 1 : 2;
 
 			return mainData;
 		}
@@ -2209,6 +2327,11 @@ namespace AC
 			timeScale = mainData.timeScale;
 
 			canKeyboardControlMenusDuringGameplay = mainData.canKeyboardControlMenusDuringGameplay;
+
+			if (mainData.toggleCursorState > 0)
+			{
+				toggleCursorOn = (mainData.toggleCursorState == 1) ? true : false;
+			}
 		}
 
 
@@ -2277,4 +2400,3 @@ namespace AC
 	}
 	
 }
-

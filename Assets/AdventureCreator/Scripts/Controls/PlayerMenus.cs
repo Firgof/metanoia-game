@@ -52,10 +52,10 @@ namespace AC
 		private List<Menu> dupSpeechMenus = new List<Menu>();
 		private List<Menu> dupHotspotMenus = new List<Menu>();
 		private Texture2D pauseTexture;
-		private string menuIdentifier;
-		private string lastMenuIdentifier;
-		private string elementIdentifier;
-		private string lastElementIdentifier;
+		private string menuIdentifier = "";
+		private string lastMenuIdentifier = "";
+		private string elementIdentifier = "";
+		private string lastElementIdentifier = "";
 		private MenuInput selectedInputBox;
 		private string selectedInputBoxMenuName;
 		private MenuInventoryBox activeInventoryBox;
@@ -726,7 +726,7 @@ namespace AC
 							{
 								screenPosition = speaker.GetScreenCentre ();
 								screenPosition = new Vector2 (screenPosition.x * Screen.width, (1f - screenPosition.y) * Screen.height);
-								menu.SetCentre (screenPosition);
+								menu.SetCentre (screenPosition, true);
 							}
 						}
 					}
@@ -742,7 +742,7 @@ namespace AC
 							{
 								screenPosition = KickStarter.player.GetScreenCentre ();
 								screenPosition = new Vector2 (screenPosition.x * Screen.width, (1f - screenPosition.y) * Screen.height);
-								menu.SetCentre (screenPosition);
+								menu.SetCentre (screenPosition, true);
 							}
 						}
 					}
@@ -866,7 +866,8 @@ namespace AC
 				{
 					Vector2 screenPosition = speaker.GetScreenCentre ();
 					menu.SetCentre (new Vector2 (screenPosition.x + (menu.manualPosition.x / 100f) - 0.5f,
-					                             screenPosition.y + (menu.manualPosition.y / 100f) - 0.5f));
+					                             screenPosition.y + (menu.manualPosition.y / 100f) - 0.5f),
+					                true);
 				}
 			}
 			else if (menu.positionType == AC_PositionType.AbovePlayer)
@@ -875,7 +876,8 @@ namespace AC
 				{
 					Vector2 screenPosition = KickStarter.player.GetScreenCentre ();
 					menu.SetCentre (new Vector2 (screenPosition.x + (menu.manualPosition.x / 100f) - 0.5f,
-					                             screenPosition.y + (menu.manualPosition.y / 100f) - 0.5f));
+					                             screenPosition.y + (menu.manualPosition.y / 100f) - 0.5f),
+					                true);
 				}
 			}
 		}
@@ -923,7 +925,7 @@ namespace AC
 						menu.TurnOn (true);
 					}
 
-					if (menu.IsOn () && menu.IsPointInside (invertedMouse))
+					if (menu.IsOn () && menu.IsPointInside (invertedMouse) && !menu.ignoreMouseClicks)
 					{
 						foundMouseOverMenu = true;
 					}
@@ -964,25 +966,48 @@ namespace AC
 			
 			else if (menu.appearType == AppearType.MouseOver)
 			{
-				if (KickStarter.stateHandler.gameState == GameState.Normal && !menu.isLocked && menu.IsPointInside (invertedMouse))
+				if (menu.pauseWhenEnabled)
 				{
-					if (menu.IsOff ())
+					if ((KickStarter.stateHandler.gameState == GameState.Paused || KickStarter.stateHandler.gameState == GameState.Normal)
+						&& (!menu.isLocked && menu.IsPointInside (invertedMouse)))
 					{
-						menu.TurnOn (true);
+						if (menu.IsOff ())
+						{
+							menu.TurnOn (true);
+						}
+						
+						if (!menu.ignoreMouseClicks)
+						{
+							foundMouseOverMenu = true;
+						}
 					}
-					
-					if (!menu.ignoreMouseClicks)
+					else
 					{
-						foundMouseOverMenu = true;
+						menu.TurnOff (true);
 					}
-				}
-				else if (KickStarter.stateHandler.gameState == GameState.Paused)
-				{
-					menu.ForceOff ();
 				}
 				else
 				{
-					menu.TurnOff (true);
+					if (KickStarter.stateHandler.gameState == GameState.Normal && !menu.isLocked && menu.IsPointInside (invertedMouse))
+					{
+						if (menu.IsOff ())
+						{
+							menu.TurnOn (true);
+						}
+						
+						if (!menu.ignoreMouseClicks)
+						{
+							foundMouseOverMenu = true;
+						}
+					}
+					else if (KickStarter.stateHandler.gameState == GameState.Paused)
+					{
+						menu.ForceOff ();
+					}
+					else
+					{
+						menu.TurnOff (true);
+					}
 				}
 			}
 			
@@ -1300,7 +1325,7 @@ namespace AC
 
 			if (KickStarter.settingsManager.inputMethod == InputMethod.MouseAndKeyboard && menu.IsPointInside (KickStarter.playerInput.GetInvertedMouse ()))
 			{
-				menuIdentifier = menu.id.ToString ();
+				menuIdentifier = menu.IDString;
 				mouseOverMenuName = menu;
 			}
 
@@ -1344,7 +1369,7 @@ namespace AC
 						if ((!interactionMenuIsOn || menu.appearType == AppearType.OnInteraction)
 							&& (KickStarter.playerInput.GetDragState () == DragState.None || (KickStarter.playerInput.GetDragState () == DragState.Inventory && CanElementBeDroppedOnto (menu.elements[j]))))
 						{
-							if (KickStarter.sceneSettings && menu.elements[j].hoverSound && lastElementIdentifier != (menu.id.ToString () + menu.elements[j].ID.ToString () + i.ToString ()))
+							if (KickStarter.sceneSettings && menu.elements[j].hoverSound && lastElementIdentifier != (menu.IDString + menu.elements[j].IDString + i.ToString ()))
 							{
 								if (menu.CanCurrentlyKeyboardControl () && lastElementIdentifier == "")
 								{
@@ -1356,7 +1381,7 @@ namespace AC
 								}
 							}
 							
-							elementIdentifier = menu.id.ToString () + menu.elements[j].ID.ToString () + i.ToString ();
+							elementIdentifier = menu.IDString + menu.elements[j].IDString + i.ToString ();
 							mouseOverElementName = menu.elements[j];
 							mouseOverElementSlot = i;
 						}
@@ -1666,7 +1691,7 @@ namespace AC
 
 			if (KickStarter.settingsManager.inputMethod == InputMethod.MouseAndKeyboard && menu.IsPointInside (KickStarter.playerInput.GetInvertedMouse ()))
 			{
-				menuIdentifier = menu.id.ToString ();
+				menuIdentifier = menu.IDString;
 				mouseOverMenuName = menu;
 				mouseOverElementName = null;
 				mouseOverElementSlot = 0;
@@ -1840,7 +1865,7 @@ namespace AC
 				foundMouseOverInteractionMenu = false;
 				foundMouseOverInventory = false;
 				foundCanKeyboardControl = false;
-				
+
 				for (int i=0; i<menus.Count; i++)
 				{
 					UpdateMenu (menus[i]);
@@ -1848,7 +1873,7 @@ namespace AC
 					{
 						UpdateElements (menus[i], languageNumber);
 					}
-					else if (menus[i].IsOff () && menuIdentifier == menus[i].id.ToString ())
+					else if (menus[i].IsOff () && menuIdentifier == menus[i].IDString)
 					{
 						menuIdentifier = "";
 					}
@@ -2064,13 +2089,12 @@ namespace AC
 				if (menu.appearType == AppearType.WhenSpeechPlays && menu.oneMenuPerSpeech && speech.MenuCanShow (menu))
 				{
 					Menu dupMenu = ScriptableObject.CreateInstance <Menu>();
-					dupMenu.Copy (menu, false);
+					dupMenu.DuplicateInGame (menu);
 					if (dupMenu.IsUnityUI ())
 					{
 						dupMenu.LoadUnityUI ();
 					}
 					dupMenu.Recalculate ();
-					dupMenu.title += " (Duplicate)";
 					dupMenu.SetSpeech (speech);
 					dupMenu.TurnOn (true);
 					dupSpeechMenus.Add (dupMenu);
@@ -2097,7 +2121,7 @@ namespace AC
 					if (menu.appearType == AppearType.OnHotspot && menu.GetsDuplicated ())
 					{
 						Menu dupMenu = ScriptableObject.CreateInstance <Menu>();
-						dupMenu.Copy (menu, false);
+						dupMenu.DuplicateInGame (menu);
 						if (dupMenu.IsUnityUI ())
 						{
 							dupMenu.LoadUnityUI ();
@@ -2123,7 +2147,7 @@ namespace AC
 			{
 				ACDebug.Log ("Cannot crossfade to menu " + _menuTo.title + " as it is locked.");
 			}
-			else if (!_menuTo.IsEnabled())
+			else if (!_menuTo.IsEnabled ())
 			{
 				// Turn off all other menus
 				crossFadeFrom = null;
@@ -2138,6 +2162,12 @@ namespace AC
 						}
 						else
 						{
+							if (menu.appearType == AppearType.DuringConversation && KickStarter.playerInput.activeConversation != null)
+							{
+								ACDebug.LogWarning ("Cannot turn off Menu '" + menu.title + "' as a Conversation is currently active.");
+								continue;
+							}
+
 							menu.TurnOff (true);
 							crossFadeFrom = menu;
 						}
@@ -2661,6 +2691,18 @@ namespace AC
 					}
 				}
 			}
+
+			if (objectToSelect != null)
+			{
+				StartCoroutine (SelectUIElement (objectToSelect));
+			}
+		}
+
+
+		private IEnumerator SelectUIElement (GameObject objectToSelect)
+		{
+			eventSystem.SetSelectedGameObject (null);
+			yield return null;
 			eventSystem.SetSelectedGameObject (objectToSelect);
 		}
 
@@ -2813,7 +2855,7 @@ namespace AC
 			
 			foreach (AC.Menu _menu in menus)
 			{
-				menuString.Append (_menu.id.ToString ());
+				menuString.Append (_menu.IDString);
 				menuString.Append (SaveSystem.colon);
 				menuString.Append (_menu.isLocked.ToString ());
 				menuString.Append (SaveSystem.pipe);
@@ -2837,7 +2879,7 @@ namespace AC
 				if (_menu.IsManualControlled ())
 				{
 					changeMade = true;
-					menuString.Append (_menu.id.ToString ());
+					menuString.Append (_menu.IDString);
 					menuString.Append (SaveSystem.colon);
 					menuString.Append (_menu.IsEnabled ().ToString ());
 					menuString.Append (SaveSystem.pipe);
@@ -2860,12 +2902,12 @@ namespace AC
 			{
 				if (_menu.elements.Count > 0)
 				{
-					visibilityString.Append (_menu.id.ToString ());
+					visibilityString.Append (_menu.IDString);
 					visibilityString.Append (SaveSystem.colon);
 					
 					foreach (MenuElement _element in _menu.elements)
 					{
-						visibilityString.Append (_element.ID.ToString ());
+						visibilityString.Append (_element.IDString);
 						visibilityString.Append ("=");
 						visibilityString.Append (_element.isVisible.ToString ());
 						visibilityString.Append ("+");
@@ -2896,7 +2938,7 @@ namespace AC
 					if (_element is MenuJournal)
 					{
 						MenuJournal journal = (MenuJournal) _element;
-						journalString.Append (_menu.id.ToString ());
+						journalString.Append (_menu.IDString);
 						journalString.Append (SaveSystem.colon);
 						journalString.Append (journal.ID);
 						journalString.Append (SaveSystem.colon);
@@ -2904,8 +2946,8 @@ namespace AC
 						foreach (JournalPage page in journal.pages)
 						{
 							journalString.Append (page.lineID);
-							journalString.Append ("*");
-							journalString.Append (page.text);
+							//journalString.Append ("*");
+							//journalString.Append (page.text);
 							journalString.Append ("~");
 						}
 						
@@ -2913,6 +2955,9 @@ namespace AC
 						{
 							journalString.Remove (journalString.Length-1, 1);
 						}
+
+						journalString.Append (SaveSystem.colon);
+						journalString.Append (journal.showPage);
 						
 						journalString.Append (SaveSystem.pipe);
 					}
@@ -2926,6 +2971,7 @@ namespace AC
 			
 			return journalString.ToString ();
 		}
+
 
 		private void AssignMenuLocks (string menuLockData)
 		{
@@ -3083,21 +3129,63 @@ namespace AC
 								if (_element.ID == elementID && _element is MenuJournal)
 								{
 									MenuJournal journal = (MenuJournal) _element;
-									journal.pages = new List<JournalPage>();
-									journal.showPage = 1;
-									
+									bool clearedJournal = false;
 									string[] pageArray = chunkData[2].Split ("~"[0]);
 									
 									foreach (string chunkData2 in pageArray)
 									{
-										string[] chunkData3 = chunkData2.Split ("*"[0]);
-										
 										int lineID = -1;
+										string[] chunkData3 = chunkData2.Split ("*"[0]);
 										int.TryParse (chunkData3[0], out lineID);
-										
-										journal.pages.Add (new JournalPage (lineID, chunkData3[1]));
+
+										if (chunkData3.Length > 1)
+										{
+											// Backwards-compatibility for old save files
+
+											if (!clearedJournal)
+											{
+												journal.pages = new List<JournalPage>();
+												journal.showPage = 1;
+												clearedJournal = true;
+											}
+											journal.pages.Add (new JournalPage (lineID, chunkData3[1]));
+										}
+										else if (lineID >= 0)
+										{
+											if (!clearedJournal)
+											{
+												journal.pages = new List<JournalPage>();
+												journal.showPage = 1;
+												clearedJournal = true;
+											}
+
+											SpeechLine speechLine = KickStarter.speechManager.GetLine (lineID);
+											if (speechLine != null && speechLine.textType == AC_TextType.JournalEntry)
+											{
+												journal.pages.Add (new JournalPage (lineID, speechLine.text));
+											}
+										}
 									}
-									
+
+									if (clearedJournal)
+									{
+										if (chunkData.Length > 3)
+										{
+											int showPage = 1;
+											int.TryParse (chunkData[3], out showPage);
+
+											if (showPage > journal.pages.Count)
+											{
+												showPage = journal.pages.Count;
+											}
+											else if (showPage < 1)
+											{
+												showPage = 1;
+											}
+											journal.showPage = showPage;
+										}
+									}
+
 									break;
 								}
 							}

@@ -117,7 +117,7 @@ namespace AC
 
 			UpdateLimitCategory ();
 
-			PopulateList ();
+			items = GetItemList ();
 
 			base.Copy (_element);
 
@@ -300,7 +300,10 @@ namespace AC
 			}
 			EditorGUILayout.EndVertical ();
 
-			ShowCategoriesUI ();
+			if (CanBeLimitedByCategory ())
+			{
+				ShowCategoriesUI ();
+			}
 
 			base.ShowGUI (menu);
 		}
@@ -557,19 +560,21 @@ namespace AC
 
 				if (inventoryBoxType == AC_InventoryBoxType.Default)
 				{
-					if (items.Count <= (_slot + offset) || items[_slot+offset] == null)
+					int trueIndex = _slot + offset;
+
+					if (items.Count <= trueIndex || items[trueIndex] == null)
 					{
 						// Black space
 						if (KickStarter.runtimeInventory.selectedItem != null && KickStarter.settingsManager.canReorderItems)
 						{
-							if (!limitToCategory)
+							if (limitToCategory && categoryIDs != null && categoryIDs.Count > 0)
 							{
-								KickStarter.runtimeInventory.localItems = KickStarter.runtimeInventory.MoveItemToIndex (KickStarter.runtimeInventory.selectedItem, KickStarter.runtimeInventory.localItems, _slot + offset);
+								// Need to change index because we want to affect the actual inventory, not the percieved one shown in the restricted menu
+								List<InvItem> trueItemList = GetItemList (false);
+								trueIndex += LimitByCategory (trueItemList, _slot + offset).Offset;
 							}
-							else
-							{
-								ACDebug.Log ("Cannot re-order inventory items in InventoryBox elements that are limited to a particular inventory category.");
-							}
+
+							KickStarter.runtimeInventory.localItems = KickStarter.runtimeInventory.MoveItemToIndex (KickStarter.runtimeInventory.selectedItem, KickStarter.runtimeInventory.localItems, trueIndex);
 						}
 						KickStarter.runtimeInventory.SetNull ();
 						return;
@@ -658,7 +663,7 @@ namespace AC
 		 */
 		public override void RecalculateSize (MenuSource source)
 		{
-			PopulateList ();
+			items = GetItemList ();
 
 			if (inventoryBoxType == AC_InventoryBoxType.HotspotBased)
 			{
@@ -703,67 +708,69 @@ namespace AC
 		}
 		
 		
-		private void PopulateList ()
+		private List<InvItem> GetItemList (bool doLimit = true)
 		{
+			List<InvItem> newItemList = new List<InvItem>();
+
 			if (Application.isPlaying)
 			{
 				if (inventoryBoxType == AC_InventoryBoxType.HotspotBased)
 				{
 					if (limitToDefinedInteractions)
 					{
-						items = KickStarter.runtimeInventory.MatchInteractions ();
+						newItemList = KickStarter.runtimeInventory.MatchInteractions ();
 					}
 					else
 					{
-						items = KickStarter.runtimeInventory.localItems;
+						newItemList = KickStarter.runtimeInventory.localItems;
 					}
 				}
 				else if (inventoryBoxType == AC_InventoryBoxType.DisplaySelected)
 				{
-					items = KickStarter.runtimeInventory.GetSelected ();
+					newItemList = KickStarter.runtimeInventory.GetSelected ();
 				}
 				else if (inventoryBoxType == AC_InventoryBoxType.DisplayLastSelected)
 				{
 					if (KickStarter.runtimeInventory.selectedItem != null)
 					{
-						items = new List<InvItem>();
-						items = KickStarter.runtimeInventory.GetSelected ();
+						newItemList = new List<InvItem>();
+						newItemList = KickStarter.runtimeInventory.GetSelected ();
 					}
-					else if (items.Count == 1 && !KickStarter.runtimeInventory.IsItemCarried (items[0]))
+					else if (newItemList.Count == 1 && !KickStarter.runtimeInventory.IsItemCarried (newItemList[0]))
 					{
-						items.Clear ();
+						newItemList.Clear ();
 					}
 				}
 				else if (inventoryBoxType == AC_InventoryBoxType.Container)
 				{
 					if (KickStarter.playerInput.activeContainer)
 					{
-						items.Clear ();
+						newItemList.Clear ();
 						foreach (ContainerItem containerItem in KickStarter.playerInput.activeContainer.items)
 						{
 							InvItem referencedItem = new InvItem (KickStarter.inventoryManager.GetItem (containerItem.linkedID));
 							referencedItem.count = containerItem.count;
-							items.Add (referencedItem);
+							newItemList.Add (referencedItem);
 						}
 					}
 				}
 				else
 				{
-					items = new List<InvItem>();
+					newItemList = new List<InvItem>();
 					foreach (InvItem _item in KickStarter.runtimeInventory.localItems)
 					{
-						items.Add (_item);
+						newItemList.Add (_item);
 					}
 				}
 			}
 			else
 			{
-				items = new List<InvItem>();
+				newItemList = new List<InvItem>();
 				if (AdvGame.GetReferences ().inventoryManager)
 				{
 					foreach (InvItem _item in AdvGame.GetReferences ().inventoryManager.items)
 					{
-						items.Add (_item);
+						newItemList.Add (_item);
 						if (_item != null)
 						{
 							_item.recipeSlot = -1;
@@ -772,25 +779,41 @@ namespace AC
 				}
 			}
 
-			if (inventoryBoxType == AC_InventoryBoxType.Default || inventoryBoxType == AC_InventoryBoxType.CustomScript)
+			if (Application.isPlaying && 
+				(inventoryBoxType == AC_InventoryBoxType.Default || inventoryBoxType == AC_InventoryBoxType.CustomScript))
 			{
-				LimitByCategory ();
-
 				while (AreAnyItemsInRecipe ())
 				{
-					foreach (InvItem _item in items)
+					foreach (InvItem _item in newItemList)
 					{
 						if (_item != null && _item.recipeSlot > -1)
 						{
 							if (AdvGame.GetReferences ().settingsManager.canReorderItems)
-								items [items.IndexOf (_item)] = null;
+								newItemList [newItemList.IndexOf (_item)] = null;
 							else
-								items.Remove (_item);
+								newItemList.Remove (_item);
 							break;
 						}
 					}
 				}
 			}
+
+			if (doLimit && CanBeLimitedByCategory ())
+			{
+				newItemList = LimitByCategory (newItemList, 0).LimitedItems;
+			}
+
+			return newItemList;
+		}
+
+
+		private bool CanBeLimitedByCategory ()
+		{
+			if (inventoryBoxType == AC_InventoryBoxType.Default || inventoryBoxType == AC_InventoryBoxType.CustomScript)
+			{
+				return true;
+			}
+			return false;
 		}
 
 
@@ -837,19 +860,36 @@ namespace AC
 		}
 
 
-		private void LimitByCategory ()
+		private LimitedItemList LimitByCategory (List<InvItem> itemsToLimit, int reverseItemIndex)
 		{
+			int offset = 0;
+
 			if (limitToCategory && categoryIDs.Count > 0)
 			{
-				for (int i=0; i<items.Count; i++)
+				for (int i=0; i<itemsToLimit.Count; i++)
 				{
-					if (items[i] != null && !categoryIDs.Contains (items[i].binID))
+					if (itemsToLimit[i] != null && !categoryIDs.Contains (itemsToLimit[i].binID))
 					{
-						items.RemoveAt (i);
+						/*if (KickStarter.settingsManager.canReorderItems && Application.isPlaying)
+						{
+							itemsToLimit[i] = null;
+						}
+						else
+						{*/
+							if (i <= reverseItemIndex)
+							{
+								offset ++;
+							}
+
+							itemsToLimit.RemoveAt (i);
+						//}
+
 						i = -1;
 					}
 				}
 			}
+
+			return new LimitedItemList (itemsToLimit, offset);
 		}
 		
 
@@ -1037,6 +1077,8 @@ namespace AC
 					if (container.items.Count > (_slot+offset) && container.items [_slot+offset] != null)
 					{
 						ContainerItem containerItem = container.items [_slot + offset];
+
+						KickStarter.eventManager.Call_OnUseContainer (false, container, containerItem);
 						KickStarter.runtimeInventory.Add (containerItem.linkedID, containerItem.count, selectItemsAfterTaking, -1);
 						container.items.Remove (containerItem);
 					}
@@ -1044,8 +1086,12 @@ namespace AC
 				else
 				{
 					// Placing an item inside the container
-					container.InsertAt (KickStarter.runtimeInventory.selectedItem, _slot+offset);
-					KickStarter.runtimeInventory.Remove (KickStarter.runtimeInventory.selectedItem);
+					ContainerItem containerItem = container.InsertAt (KickStarter.runtimeInventory.selectedItem, _slot+offset);
+					if (containerItem != null)
+					{
+						KickStarter.runtimeInventory.Remove (KickStarter.runtimeInventory.selectedItem);
+						KickStarter.eventManager.Call_OnUseContainer (true, container, containerItem);
+					}
 				}
 			}
 
@@ -1106,6 +1152,41 @@ namespace AC
 			}
 			return 0;
 		}
+
+
+		private struct LimitedItemList
+		{
+
+			List<InvItem> limitedItems;
+			int offset;
+
+	
+			public LimitedItemList (List<InvItem> _limitedItems, int _offset)
+			{
+				limitedItems = _limitedItems;
+				offset = _offset;
+			}
+
+
+			public List<InvItem> LimitedItems
+			{
+				get
+				{
+					return limitedItems;
+				}
+			}
+
+
+			public int Offset
+			{
+				get
+				{
+					return offset;
+				}
+			}
+
+		}
+
 
 	}
 

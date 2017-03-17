@@ -87,6 +87,7 @@ namespace AC
 		public int linkedUiID;
 
 		protected int offset = 0;
+		private string idString;
 		private Vector2 dragOffset;
 		
 		[SerializeField] protected Rect relativeRect;
@@ -169,6 +170,8 @@ namespace AC
 			changeCursor = _element.changeCursor;
 			cursorID = _element.cursorID;
 			alternativeInputButton = _element.alternativeInputButton;
+
+			idString = ID.ToString ();
 		}
 
 
@@ -1062,6 +1065,18 @@ namespace AC
 		public int GetOffset ()
 		{
 			return offset;
+		}
+
+
+		/**
+		 * The Menu's id number as a string.
+		 */
+		public string IDString
+		{
+			get
+			{
+				return idString;
+			}
 		}
 
 	}

@@ -1,11 +1,157 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf760
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf810
 \cocoascreenfonts1{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
 {\colortbl;\red255\green255\blue255;}
 {\*\expandedcolortbl;;}
 \paperw11900\paperh16840\margl1440\margr1440\vieww20440\viewh15160\viewkind0
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
 
-\f0\fs24 \cf0 Version 1.55b:\
+\f0\fs24 \cf0 Version 1.56b:\
+\
+-Added: When "Player Vicinity" is used to detect Hotspots, distant Hotspots will be placed on a separate layer (can be disabled)\
+-Added: Re-skin of Actions in the ActionList Editor window, so that overlapping Actions are more readable\
+-Added: "Straight To Cursor" movement method will make use of pathfinding if a non-zero "Pathfinding update time" is set\
+-Added: Ability to set the 'separation time' between a click and a hold when using "Straight To Cursor" movement method\
+-Added: Menus set to appear "On Mouse Over" can now be set to pause the game when enabled\
+-Added: Ability to re-order Inventory menus that are limited by category\
+-Added: Ability to limit a Container\'92s items by Inventory Item categories\
+-Added: Option to smooth the movement of Unity UI Prefab-based Menus that either follow the cursor or characters\
+-Added: Section to manual that describes each available input's purpose\
+-Added: If the MusicEngine prefab does not have the MusicCrossfade component it requires, it will be created automatically\
+-Added: Warning message if a Hotspot Detector is placed on the same layer used by Hotspots, as this creates a conflict\
+-Added: IsAnySpeechPlaying function to Dialog script\
+-Changed: Increased the "Variable: Run sequence" Action's maximum possible outputs to 20\
+-Fixed: Error when transferring items to and from Containers in v1.56\
+-Fixed: Menu positioning issues when an aspect ratio is enforced\
+-Fixed: Variables auto-created with the \'93Variables: Run sequence\'94 Action not saving correctly\
+-Fixed: Issue with Hotspots not always highlighting when using \'93Player Vicinity\'94 to detect them, and the input method is set to Touch Screen\
+-Fixed: Inventory Box menu elements showing "Limit by category" options for the wrong type setting\
+-Fixed: Menus set to appear "During Gameplay" blocking the cursor even if "Ignore Cursor clicks?" is checked\
+-Fixed: "Mouse ScrollWheel" input being listed as "MouseScrollWheel" under the list of available inputs\
+-Fixed: Not being able to copy certain Menu Manager field references to the text buffer when right-clicking their labels\
+\
+\
+Version 1.56a:\
+\
+-Added: Ability to use a Sorting Map to scale characters according to an Animation Curve, as opposed to linearly between areas\
+-Added: Ability to resume a music track when playing or crossfading to a previously-played track with the "Sound: Play music" Action\
+-Added: Option to Footstep Sounds component to only play sounds when the character is grounded\
+-Added: OnVariableChange event - called whenever a Global or Local variable's value is changed either through Actions or via scripting\
+-Added: Ability to set the Animator component of Mecanim-based characters explicitly (will continue to rely on the root Animator if not set)\
+-Added: Ability to skip speech via the SkipSpeech input only, as opposed to also by mouse-clicks\
+-Fixed: "SkipSpeech" input not always listing in Settings Manager's list of available inputs when it should be\
+-Fixed: Critical error when creating new Actions in v1.56\
+\
+\
+Version 1.56:\
+\
+= Upgrade notes =\
+-If a SavesList element does not automatically handle the loading or saving, its Menu is no longer closed when clicked on\
+-If a SavesList element has "Fixed option number" checked, the "ActionList on click/save/load" now passes the chosen option as a parameter, not the slot index\
+-The "Options.SwitchProfile" and "Options.SwitchProfileIfExists" functions have been renamed to "Options.SwitchProfileID" and "Options.SwitchProfile" respectively\
+-For in-game changes to Journals to be saved, pages must now be listed in the Speech Manager by using the "Gather text" feature\
+-The Cursor's locked state is now recorded in save games\
+-The PlayerInput script's cursorIsLocked variable is now private, use IsCursorLocked() instead\
+-The Dialog script's GetDefaultAudioSource has been replaced with GetNarratorAudioSource\
+\
+= Performance =\
+-Added: "Performance and optimisation" section to Manual\
+-Added: Performance boost to Sorting Maps, Menu system and Speech Manager\
+-Added: Ability to reduce Resources.LoadAll() calls when loading a saved game by placing assets in "Saveable" subfolders - see Manual's Section 13.6\
+-Added: AC's OnGUI code will now be ignored, and given a performance boost, if "ACIgnoreOnGUI" is listed as a Scripting Define Symbol\
+\
+= Saving =\
+-Added: Ability for the "Save: Check" Action to check for saves by SavesList element slot index as well as save ID\
+-Changed: If a SavesList element does not automatically handle the loading or saving, its Menu is no longer closed when clicked on\
+-Changed: If a SavesList element has "Fixed option number" checked, the "ActionList on click/save/load" now passes the chosen option as a parameter, not the slot index\
+-Fixed: SavesList element's "ActionList on click/save/load" not accounting for the element's offset when passing the slot index value as a parameter\
+-Fixed: Player's first-person camera being made active upon loading a save game, even if the Movement method is not set to First Person\
+\
+= Profiles =\
+-Added: The "Save: Manage profiles" Action can now be used to switch the active profile manually\
+-Added: The "Options.CreateProfile" function now returns the created profile ID number\
+-Added: The "Save: Manage profiles" Action can now refer to profiles by ID number, as well as by slot index\
+-Added: Ability to prevent clicking of ProfilesList menu elements resulting in the active profile being automatically switched\
+-Added: Ability to send the profile index to an ActionList asset's integer parameter when clicking a ProfilesList menu element\
+-Added: Ability to have the ProfilesList menu element refer to a fixed profile ID only\
+-Added: The "Save: Check" Action can now check if a given profile exists\
+-Changed: The "Options.SwitchProfile" and "Options.SwitchProfileIfExists" functions have been renamed to "Options.SwitchProfileID" and "Options.SwitchProfile" respectively\
+\
+= Speech =\
+-Added: "Dialogue: Rename option" Action - use to rename a Conversation's dialogue option labels\
+-Changed: The Dialog script's GetDefaultAudioSource has been replaced with GetNarratorAudioSource\
+-Fixed: "Reset text" button in Speech Manager ignoring certain Actions\
+-Fixed: Audio not stopping if a narration line is stopped using the "Dialogue: Stop speech" Action\
+-Fixed: Narration speech audio levels being affected by SFX reduction settings\
+-Fixed: Speed issues with speech-scrolling when Unity's Fixed Timestep setting is changed\
+\
+= Journals =\
+-Added: Ability to insert and move pages within a Journal element in the Menu Manager\
+-Added: The currently-viewed page in a journal will now be recorded in save game files\
+-Changed: For in-game changes to Journals to be saved, pages must now be listed in the Speech Manager by using the "Gather text" feature\
+-Fixed: Display issue with Menu Manager if viewing a Journal element with too much text\
+-Fixed: Issues with journals that include colon characters in their page text\
+\
+= Menus =\
+-Added: Ability to simulate right-clicks on Unity UI elements by pressing the "InteractionB" input\
+-Added: Option to reset Menus when using the "Engine: End game" Action to restart the game\
+-Added: Ability to control the opening and closing of Interaction Menus via script only\
+-Fixed: Issue when replacing inventory items while "Items can be re-ordered in Menu" is enabled\
+\
+= Cursor =\
+-Added: Ability to sync system cursor's lock state with AC's cursor lock state (enabled by default)\
+-Changed: The PlayerInput script's cursorIsLocked variable is now private, use IsCursorLocked() instead\
+-Changed: The Cursor's locked state is now recorded in save games\
+-Fixed: Various issues related to free-aim locking when using Keyboard And Controller input\
+-Fixed: Game Camera Third Person no longer being draggable when the cursor is locked\
+\
+= Variables =\
+-Added: Parameter values can now be set from Global Variables with the "ActionList: Set parameter" Action\
+-Added: Ability to create new Integer variables directly from the "Variable: Run sequence" Action\
+\
+= Sound =\
+-Added: Ability to play sounds from Footstep Sounds component automatically as opposed to relying on Animation Events\
+-Added: Ability to define "run" sounds in Footstep Sounds component\
+-Added: Static "music" variable to KickStarter script\
+\
+= Draggables =\
+-Added: Notice on Draggables that rely on Straight Tracks to recommend the use of a Sphere Collider to set their boundary limits\
+-Added: Ability to control the influence of the player's movement on the drag force when moving Draggables\
+-Fixed: Issue when dragging objects with an UFPS player prefab\
+-Fixed: Collide sounds not playing on Draggable objects\
+-Fixed: Speed issues with draggables when Unity's Fixed Timestep setting is changed\
+\
+= Player =\
+-Added: Changes to Players made using "Character: Animate" are now saved when switching to and from scenes with local Players\
+-Added: Ability to control the player's ability to jump with the "Player: Constrain" Action when not using Point And Click movement\
+-Fixed: \'93Jump speed\'94 field not showing in Settings Manager when using Touch Screen input\
+-Fixed: Wrong scene sometimes loading if Players present in the scene file are used in conjunction with Player prefabs\
+-Fixed: Switching Player sometimes causing the Player to become hidden if Loading Screens are enabled\
+-Fixed: First Person Camera moving slightly when unpausing the game when running fullscreen\
+-Fixed: Hotspots sometimes not highlighting when using Player Vicinity to detect them\
+\
+= Misc =\
+-Added: OnContainerAdd and OnContainerRemove events, which are called when the player changes the contents of a Container\
+-Added: The UFPS Integration script now demonstrates how the HUD and crosshair can be hidden while AC's Pause menus are open\
+-Added: Public function _OnGUI () to StateHandler.cs - use to call AC's OnGUI code manually\
+-Added: Flash hold time slider to Highlight component\
+-Fixed: "Default Action" changing when new Actions are listed in the Actions Manager (after upgrading)\
+-Fixed: Screen Arrows not responding to drag input on Touch Screen devices\
+\
+\
+Version 1.55c:\
+\
+-Added: Option for Draggables to maintain their children\'92s transforms when attaching themselves to Tracks\
+-Added: KillDialog function variant to Dialog.cs that kills a specific line of dialogue, as opposed to all\
+-Added: Option to \'93Character: NPC follow\'94 Action for NPC\'92s target position to be random\
+-Added: Ability to set the head-turning speed of 3D characters\
+-Added: Warning boxes to top of demo Managers to advise against modifying them\
+-Fixed: \'93First selected element\'94 not always highlighting when a Unity UI-based Menu is turned on\
+-Fixed: Issues with speech volumes set with Audio Mixer Groups\
+-Fixed: Unity UI canvases rendered in World Space being parented to \'93_UI\'94 GameObject after a scene change\
+-Fixed: Issue when loading First Person games in other scenes\
+\
+\
+Version 1.55b:\
 \
 -Added: Ability to remove the default functionality of mouse clicks when using Mouse And Keyboard input\
 -Added: Ability to control free-aim acceleration value for first person movement (user lower values for smoother motion)\

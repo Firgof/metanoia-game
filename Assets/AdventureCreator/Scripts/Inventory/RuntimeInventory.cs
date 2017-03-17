@@ -266,6 +266,8 @@ namespace AC
 			int _index = -1;
 			foreach (InvItem item in localItems)
 			{
+				if (item == null) continue;
+
 				if (item.id == _removeID && _index == -1)
 				{
 					_index = localItems.IndexOf (item);
@@ -307,9 +309,9 @@ namespace AC
 		 * <param name = "_id">The ID number of the inventory item (InvItem) to add</param>
 		 * <param name = "amount">The amount if the inventory item to add, if the InvItem's canCarryMultiple = True</param>
 		 * <param name = "selectAfter">If True, then the inventory item will be automatically selected</param>
-		 * <param name = "playerID">The ID number of the Player to receive the item, if multiple Player prefabs are supported. If playerID = 0, the current player will receive the item</param>
+		 * <param name = "playerID">The ID number of the Player to receive the item, if multiple Player prefabs are supported. If playerID = -1, the current player will receive the item</param>
 		 */
-		public void Add (int _id, int amount = 1, bool selectAfter = false, int playerID = 0)
+		public void Add (int _id, int amount = 1, bool selectAfter = false, int playerID = -1)
 		{
 			if (playerID >= 0 && KickStarter.player.ID != playerID)
 			{
@@ -432,9 +434,9 @@ namespace AC
 		 * <param name = "_id">The ID number of the inventory item (InvItem) to remove</param>
 		 * <param name = "amount">The amount if the inventory item to remove, if the InvItem's canCarryMultiple = True</param>
 		 * <param name = "setAmount">If False, then all instances of the inventory item will be removed, even if the InvItem's canCarryMultiple = True</param>
-		 * <param name = "playerID">The ID number of the Player to lose the item, if multiple Player prefabs are supported. If playerID = 0, the current player will lose the item</param>
+		 * <param name = "playerID">The ID number of the Player to lose the item, if multiple Player prefabs are supported. If playerID = -1, the current player will lose the item</param>
 		 */
-		public void Remove (int _id, int amount, bool setAmount, int playerID = 0)
+		public void Remove (int _id, int amount, bool setAmount, int playerID = -1)
 		{
 			if (playerID >= 0 && KickStarter.player.ID != playerID)
 			{
@@ -783,7 +785,6 @@ namespace AC
 		public void Look (InvItem item)
 		{
 			if (item == null || item.recipeSlot > -1) return;
-			
 			if (item.lookActionList)
 			{
 				AdvGame.RunActionListAsset (item.lookActionList);
@@ -886,8 +887,10 @@ namespace AC
 		public void ShowInteractions (InvItem item)
 		{
 			hoverItem = item;
-			//KickStarter.playerMenus.SetInteractionMenus (true);
-			KickStarter.playerMenus.EnableInteractionMenus (item);
+			if (KickStarter.settingsManager.seeInteractions != SeeInteractions.ViaScriptOnly)
+			{
+				KickStarter.playerMenus.EnableInteractionMenus (item);
+			}
 		}
 
 
@@ -1312,7 +1315,7 @@ namespace AC
 		 */
 		public List<InvItem> MoveItemToIndex (InvItem item, List<InvItem> items, int index)
 		{
-			if (item != null)
+			if (item != null && items.Contains (item))
 			{
 				// Check nothing in place already
 				int oldIndex = items.IndexOf (item);
@@ -1325,6 +1328,13 @@ namespace AC
 				{
 					items [index] = item;
 					items [oldIndex] = null;
+				}
+				else
+				{
+					// Item already in its spot
+
+					items [oldIndex] = null;
+					items.Insert (index, item);
 				}
 				
 				SetNull ();

@@ -180,6 +180,28 @@ namespace AC
 				#endif
 			}	
 		}
+
+
+		public override Vector3 GetPointNear (Vector3 point, float minDistance, float maxDistance)
+		{
+			Vector2 circle = Random.insideUnitCircle;
+
+			Vector3 randomOffset = new Vector3 (circle.x, 0f, circle.y) * Random.Range (minDistance, maxDistance);
+			Vector3 randomPoint = point + randomOffset;
+
+			if (IsLineClear (point, randomPoint, false))
+			{
+				return randomPoint;
+			}
+
+			Vector3 intersectPoint = GetLineBreak (randomPoint, point);
+			if (intersectPoint != Vector3.zero)
+			{
+				return intersectPoint;
+			}
+
+			return base.GetPointNear (point, minDistance, maxDistance);
+		}
 		
 		
 		public override void SceneSettingsGUI ()

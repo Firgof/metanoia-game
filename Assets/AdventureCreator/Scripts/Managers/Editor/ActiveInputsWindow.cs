@@ -37,11 +37,8 @@ namespace AC
 			}
 
 			settingsManager.activeInputs = ShowActiveInputsGUI (settingsManager.activeInputs);
-			
-			if (GUI.changed)
-			{
-				EditorUtility.SetDirty (settingsManager);
-			}
+
+			UnityVersionHandler.CustomSetDirty (settingsManager);
 		}
 		
 		

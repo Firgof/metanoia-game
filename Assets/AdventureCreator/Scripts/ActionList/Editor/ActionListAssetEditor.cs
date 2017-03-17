@@ -177,7 +177,7 @@ namespace AC
 			if (GUILayout.Button("Add new Action"))
 			{
 				Undo.RecordObject (_target, "Create action");
-				AddAction (actionsManager.GetActionName (actionsManager.defaultClass), _target.actions.Count, _target);
+				AddAction (actionsManager.GetDefaultAction (), _target.actions.Count, _target);
 			}
 
 			if (GUI.changed)

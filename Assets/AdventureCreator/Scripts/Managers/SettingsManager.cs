@@ -218,6 +218,8 @@ namespace AC
 		public bool singleTapStraight = false;
 		/** If True, then single-clicking will make the player pathfind, if singleTapStraight = True */
 		public bool singleTapStraightPathfind = false;
+		/** The duration in seconds that separates a single click/tap from a held click/tap when movementMethod = AC_MovementMethod.StraightToCursor */
+		public float clickHoldSeparationStraight = 0.3f;
 
 		// First-person settings
 
@@ -284,6 +286,8 @@ namespace AC
 
 		/** How Hotspots are detected (MouseOver, PlayerVicinity) */
 		public HotspotDetection hotspotDetection = HotspotDetection.MouseOver;
+		/** If True, and hotspotDetection = HotspotDetection.PlayerVicinity, then distant Hotspots will be placed on a different layer  */
+		public bool placeDistantHotspotsOnSeparateLayer = true;
 		/** What Hotspots gets detected, if hotspotDetection = HotspotDetection.PlayerVicinity (NearestOnly, CycleMultiple, ShowAll) */
 		public HotspotsInVicinity hotspotsInVicinity = HotspotsInVicinity.NearestOnly;
 		/** When Hotspot icons are displayed (Never, Always, OnlyWhenHighlighting, OnlyWhenFlashing) */
@@ -322,6 +326,8 @@ namespace AC
 
 		/** The layer to place active Hotspots on */
 		public string hotspotLayer = "Default";
+		/** The layer to place distant Hotspots on, if hotspotDetection = HotspotDetection.PlayerVicinity */
+		public string distantHotspotLayer = "DistantHotspot";
 		/** The layer to place active NavMeshes on */
 		public string navMeshLayer = "NavMesh";
 		/** The layer to place BackgroundImage prefabs on */
@@ -629,6 +635,10 @@ namespace AC
 							{
 								stopPlayerOnClickHotspot = CustomGUILayout.ToggleLeft ("Stop player moving when click Hotspot?", stopPlayerOnClickHotspot, "AC.KickStarter.settingsManager.stopPlayerOnClickHotspot");
 							}
+							else if (seeInteractions == SeeInteractions.ViaScriptOnly)
+							{
+								EditorGUILayout.HelpBox ("Call 'AC.KickStarter.playerMenus.EnableInteractionMenus ();' to open Interaction Menus.", MessageType.Info);
+							}
 						}
 
 						if (selectInteractions == SelectInteractions.CyclingCursorAndClickingHotspot)
@@ -640,6 +650,11 @@ namespace AC
 						{
 							clickUpInteractions = CustomGUILayout.ToggleLeft ("Trigger interaction by releasing click?", clickUpInteractions, "AC.KickStarter.settingsManager.clickUpInteractions");
 							cancelInteractions = (CancelInteractions) CustomGUILayout.EnumPopup ("Close interactions with:", cancelInteractions, "AC.KickStarter.settingsManager.cancelInteractions");
+
+							if (cancelInteractions == CancelInteractions.ViaScriptOnly)
+							{
+								EditorGUILayout.HelpBox ("Call 'AC.KickStarter.playerMenus.CloseInteractionMenus ();' to close Interaction Menus.", MessageType.Info);
+							}
 						}
 						else
 						{
@@ -816,9 +831,19 @@ namespace AC
 			{
 				if (movementMethod == MovementMethod.FirstPerson)
 				{
-					freeAimSmoothSpeed = EditorGUILayout.FloatField ("Free-aim acceleration:", freeAimSmoothSpeed);
+					freeAimSmoothSpeed = CustomGUILayout.FloatField ("Free-aim acceleration:", freeAimSmoothSpeed, "AC.KickStarter.settingsManager.freeAimSmoothSpeed");
 				}
 
+				if (movementMethod == MovementMethod.StraightToCursor)
+				{
+					dragRunThreshold = CustomGUILayout.FloatField ("Run threshold:", dragRunThreshold, "AC.KickStarter.settingsManager.dragRunThreshold");
+					singleTapStraight = CustomGUILayout.ToggleLeft ("Single-clicking also moves player?", singleTapStraight, "AC.KickStarter.settingsManager.singleTapStraight");
+					if (singleTapStraight)
+					{
+						singleTapStraightPathfind = CustomGUILayout.ToggleLeft ("Pathfind when single-clicking?", singleTapStraightPathfind, "AC.KickStarter.settingsManager.singleTapStraightPathfind");
+						clickHoldSeparationStraight = CustomGUILayout.Slider ("Click/hold separation (s):", clickHoldSeparationStraight, 0f, 2f, "AC.KickStarter.settingsManager.clickHoldSeparationStraight");
+					}
+				}
 				if ((inputMethod == InputMethod.TouchScreen && movementMethod != MovementMethod.PointAndClick) || movementMethod == MovementMethod.Drag)
 				{
 					dragWalkThreshold = CustomGUILayout.FloatField ("Walk threshold:", dragWalkThreshold, "AC.KickStarter.settingsManager.dragWalkThreshold");
@@ -850,7 +875,9 @@ namespace AC
 						}
 					}
 				}
-				else if (movementMethod == MovementMethod.PointAndClick)
+				else if (movementMethod == MovementMethod.PointAndClick ||
+					(movementMethod == MovementMethod.StraightToCursor && 
+					(singleTapStraight && singleTapStraightPathfind)))
 				{
 					clickPrefab = (Transform) CustomGUILayout.ObjectField <Transform> ("Click marker:", clickPrefab, false, "AC.KickStarter.settingsManager.clickPrefab");
 					walkableClickRange = CustomGUILayout.Slider ("NavMesh search %:", walkableClickRange, 0f, 1f, "AC.KickStarter.settingsManager.walkableClickRange");
@@ -858,7 +885,10 @@ namespace AC
 					{
 						navMeshSearchDirection = (NavMeshSearchDirection) CustomGUILayout.EnumPopup ("NavMesh search direction:", navMeshSearchDirection, "AC.KickStarter.settingsManager.navMeshSearchDirection");
 					}
-					doubleClickMovement = CustomGUILayout.ToggleLeft ("Require double-click to move?", doubleClickMovement, "AC.KickStarter.settingsManager.doubleClickMovement");
+					if (movementMethod == MovementMethod.PointAndClick)
+					{
+						doubleClickMovement = CustomGUILayout.ToggleLeft ("Require double-click to move?", doubleClickMovement, "AC.KickStarter.settingsManager.doubleClickMovement");
+					}
 				}
 				else if (movementMethod == MovementMethod.FirstPerson)
 				{
@@ -871,16 +901,7 @@ namespace AC
 				{
 					disableMovementWhenInterationMenusAreOpen = CustomGUILayout.Toggle ("Disable movement when Interaction menus are on?", disableMovementWhenInterationMenusAreOpen, "AC.KickStarter.settingsManager.disableMovementWhenInterationMenusAreOpen");
 				}
-				if (movementMethod == MovementMethod.StraightToCursor)
-				{
-					dragRunThreshold = CustomGUILayout.FloatField ("Run threshold:", dragRunThreshold, "AC.KickStarter.settingsManager.dragRunThreshold");
-					singleTapStraight = CustomGUILayout.ToggleLeft ("Single-clicking also moves player?", singleTapStraight, "AC.KickStarter.settingsManager.singleTapStraight");
-					if (singleTapStraight)
-					{
-						singleTapStraightPathfind = CustomGUILayout.ToggleLeft ("Pathfind when single-clicking?", singleTapStraightPathfind, "AC.KickStarter.settingsManager.singleTapStraightPathfind");
-					}
-				}
-				if ((movementMethod == MovementMethod.Direct || movementMethod == MovementMethod.FirstPerson) && inputMethod != InputMethod.TouchScreen)
+				if (movementMethod == MovementMethod.Direct || movementMethod == MovementMethod.FirstPerson)
 				{
 					jumpSpeed = CustomGUILayout.Slider ("Jump speed:", jumpSpeed, 1f, 10f, "AC.KickStarter.settingsManager.jumpSpeed");
 				}
@@ -891,6 +912,11 @@ namespace AC
 					experimentalAccuracy = CustomGUILayout.ToggleLeft ("Attempt to be super-accurate? (Experimental)", experimentalAccuracy, "AC.KickStarter.settingsManager.experimentalAccuracy");
 				}
 				pathfindUpdateFrequency = CustomGUILayout.Slider ("Pathfinding update time (s)", pathfindUpdateFrequency, 0f, 5f, "AC.KickStarter.settingsManager.pathfindUpdateFrequency");
+
+				if (movementMethod == MovementMethod.StraightToCursor)
+				{
+					EditorGUILayout.HelpBox ("If the 'Pathfinding update time' is non-zero, the Player will pathfind to the cursor when moving.", MessageType.Info);
+				}
 			}
 		}
 
@@ -961,6 +987,10 @@ namespace AC
 			if (showHotspot)
 			{
 				hotspotDetection = (HotspotDetection) CustomGUILayout.EnumPopup ("Hotspot detection method:", hotspotDetection, "AC.KickStarter.settingsManager.hotspotDetection");
+				if (hotspotDetection == HotspotDetection.PlayerVicinity)
+				{
+					placeDistantHotspotsOnSeparateLayer = CustomGUILayout.ToggleLeft ("Place distance Hotspots on separate layer?", placeDistantHotspotsOnSeparateLayer, "AC.KickStarter.settingsManager.placeDistantHotspotsOnSeparateLayer");
+				}
 				if (hotspotDetection == HotspotDetection.PlayerVicinity && (movementMethod == MovementMethod.Direct || IsInFirstPerson ()))
 				{
 					hotspotsInVicinity = (HotspotsInVicinity) CustomGUILayout.EnumPopup ("Hotspots in vicinity:", hotspotsInVicinity, "AC.KickStarter.settingsManager.hotspotsInVicinity");
@@ -1044,6 +1074,10 @@ namespace AC
 				EditorGUILayout.Space ();
 
 				hotspotLayer = CustomGUILayout.TextField ("Hotspot layer:", hotspotLayer, "AC.KickStarter.settingsManager.hotspotLayer");
+				if (hotspotDetection == HotspotDetection.PlayerVicinity && placeDistantHotspotsOnSeparateLayer)
+				{
+					distantHotspotLayer = CustomGUILayout.TextField ("Distant hotspot layer:", distantHotspotLayer, "AC.KickStarter.settingsManager.distantHotspotLayer");
+				}
 				navMeshLayer = CustomGUILayout.TextField ("Nav mesh layer:", navMeshLayer, "AC.KickStarter.settingsManager.navMeshLayer");
 				if (cameraPerspective == CameraPerspective.TwoPointFiveD)
 				{
@@ -1126,7 +1160,7 @@ namespace AC
 				showActiveActionLists = CustomGUILayout.ToggleLeft ("List active ActionLists in Game window?", showActiveActionLists, "AC.KickStarter.settingsManager.showActiveActionLists");
 				showHierarchyIcons = CustomGUILayout.ToggleLeft ("Show icons in Hierarchy window?", showHierarchyIcons, "AC.KickStarter.settingsManager.showHierarchyIcons");
 				showDebugLogs = (ShowDebugLogs) CustomGUILayout.EnumPopup ("Show logs in Console:", showDebugLogs, "AC.KickStarter.settingsManager.showDebugLogs");
-				printActionCommentsInConsole = EditorGUILayout.ToggleLeft ("Print Action comments in Console?", printActionCommentsInConsole);
+				printActionCommentsInConsole = CustomGUILayout.ToggleLeft ("Print Action comments in Console?", printActionCommentsInConsole, "AC.KickStarter.settingsManager.printActionCommentsInConsole");
 			}
 		}
 		
@@ -1177,7 +1211,7 @@ namespace AC
 				
 				if (movementMethod == MovementMethod.FirstPerson && inputMethod == InputMethod.MouseAndKeyboard)
 				{
-					result = SmartAddInput (result, "MouseScrollWheel (Axis)");
+					result = SmartAddInput (result, "Mouse ScrollWheel (Axis)");
 					result = SmartAddInput (result, "CursorHorizontal (Axis)");
 					result = SmartAddInput (result, "CursorVertical (Axis)");
 				}
@@ -1208,7 +1242,8 @@ namespace AC
 			}
 
 			result = SmartAddInput (result, "FlashHotspots (Button)");
-			if (AdvGame.GetReferences ().speechManager != null && AdvGame.GetReferences ().speechManager.allowSpeechSkipping)
+			if (AdvGame.GetReferences ().speechManager != null &&
+			   (AdvGame.GetReferences ().speechManager.allowSpeechSkipping || AdvGame.GetReferences ().speechManager.displayForever))
 			{
 				result = SmartAddInput (result, "SkipSpeech (Button)");
 			}
@@ -1618,7 +1653,8 @@ namespace AC
 			{
 				return true;
 			}
-			if (KickStarter.player != null && KickStarter.player.FirstPersonCamera != null)
+			//if (KickStarter.player != null && KickStarter.player.FirstPersonCamera != null)// && KickStarter.mainCamera != null && KickStarter.mainCamera.attachedCamera != null && KickStarter.mainCamera.attachedCamera.transform == KickStarter.player.FirstPersonCamera)
+			if (KickStarter.player != null && KickStarter.player.FirstPersonCamera != null && KickStarter.mainCamera != null && KickStarter.mainCamera.attachedCamera == KickStarter.player.FirstPersonCamera)
 			{
 				return true;
 			}

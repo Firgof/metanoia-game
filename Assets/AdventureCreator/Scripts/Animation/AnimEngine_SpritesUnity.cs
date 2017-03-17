@@ -198,14 +198,14 @@ namespace AC
 			}
 			else if (action.method == ActionCharAnim.AnimMethodChar.SetStandard)
 			{
+				action.standard = (AnimStandard) EditorGUILayout.EnumPopup ("Change:", action.standard);
+
 				action.clip2DParameterID = Action.ChooseParameterGUI ("Clip:", parameters, action.clip2DParameterID, ParameterType.String);
 				if (action.clip2DParameterID < 0)
 				{
 					action.clip2D = EditorGUILayout.TextField ("Clip:", action.clip2D);
 				}
 
-				action.standard = (AnimStandard) EditorGUILayout.EnumPopup ("Change:", action.standard);
-				
 				if (action.standard == AnimStandard.Walk || action.standard == AnimStandard.Run)
 				{
 					action.changeSound = EditorGUILayout.Toggle ("Change sound?", action.changeSound);
@@ -762,7 +762,7 @@ namespace AC
 				}
 				
 				#if UNITY_EDITOR && UNITY_5
-				
+
 				int hash = Animator.StringToHash (clip);
 				if (character.GetAnimator ().HasState (0, hash))
 				{

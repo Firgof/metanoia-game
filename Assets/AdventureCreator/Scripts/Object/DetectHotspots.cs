@@ -31,6 +31,24 @@ namespace AC
 		private Hotspot nearestHotspot;
 		private int selected = 0;
 		private List<Hotspot> hotspots = new List<Hotspot>();
+		private int hotspotLayerInt;
+		private int distantHotspotLayerInt;
+
+
+		private void Start ()
+		{
+			if (KickStarter.settingsManager != null)
+			{
+				string layerName = LayerMask.LayerToName (gameObject.layer);
+				if (layerName == KickStarter.settingsManager.hotspotLayer)
+				{
+					ACDebug.LogWarning ("The HotspotDetector's layer, " + layerName + ", is the same used by Hotspots, and will prevent Hotspots from being properly detected. It should be moved to the Ignore Raycast layer.", gameObject);
+				}
+
+				hotspotLayerInt = LayerMask.NameToLayer (KickStarter.settingsManager.hotspotLayer);
+				distantHotspotLayerInt = LayerMask.NameToLayer (KickStarter.settingsManager.distantHotspotLayer);
+			}
+		}
 
 
 		/**
@@ -65,7 +83,7 @@ namespace AC
 				{
 					if (hotspots.Count > selected)
 					{
-						if (hotspots[selected].gameObject.layer == LayerMask.NameToLayer (AdvGame.GetReferences ().settingsManager.hotspotLayer))
+						if (IsLayerCorrect (hotspots[selected].gameObject.layer))
 						{
 							return nearestHotspot;
 						}
@@ -87,7 +105,7 @@ namespace AC
 						selected = 0;
 					}
 
-					if (hotspots [selected].gameObject.layer == LayerMask.NameToLayer (AdvGame.GetReferences ().settingsManager.hotspotLayer))
+					if (IsLayerCorrect (hotspots[selected].gameObject.layer))
 					{
 						return hotspots [selected];
 					}
@@ -109,7 +127,7 @@ namespace AC
 
 		private void OnTriggerStay (Collider other)
 		{
-			if (other.GetComponent <Hotspot>() && other.gameObject.layer == LayerMask.NameToLayer (AdvGame.GetReferences ().settingsManager.hotspotLayer))
+			if (other.GetComponent <Hotspot>() && IsLayerCorrect (other.gameObject.layer, true))
 			{
 				if (nearestHotspot == null || (Vector3.Distance (transform.position, other.transform.position) <= Vector3.Distance (transform.position, nearestHotspot.transform.position)))
 				{
@@ -131,7 +149,7 @@ namespace AC
 
 		private void OnTriggerStay2D (Collider2D other)
 		{
-			if (other.GetComponent <Hotspot>() && other.gameObject.layer == LayerMask.NameToLayer (AdvGame.GetReferences ().settingsManager.hotspotLayer))
+			if (other.GetComponent <Hotspot>() && IsLayerCorrect (other.gameObject.layer, true))
 			{
 				if (nearestHotspot == null || (Vector3.Distance (transform.position, other.transform.position) <= Vector3.Distance (transform.position, nearestHotspot.transform.position)))
 				{
@@ -153,6 +171,27 @@ namespace AC
 		private void OnTriggerExit (Collider other)
 		{
 			ForceRemoveHotspot (other.GetComponent <Hotspot>());
+		}
+
+
+		private bool IsLayerCorrect (int layerInt, bool distantToo = false)
+		{
+
+			if (distantToo)
+			{
+				if (layerInt == hotspotLayerInt || layerInt == distantHotspotLayerInt)
+				{
+					return true;
+				}
+			}
+			else
+			{
+				if (layerInt == hotspotLayerInt)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 

@@ -36,6 +36,8 @@ namespace AC
 		public CursorDisplay cursorDisplay = CursorDisplay.Always;
 		/** If True, then the system's default hardware cursor will replaced with a custom one */
 		public bool allowMainCursor = false;
+		/** If True, and cursorRendering = CursorRendering.Software, the system cursor will be locked when the AC cursor is (this is always true when using Hardware cursor rendering) */
+		public bool lockSystemCursor = true;
 
 		/** If True, then a separate cursor will display when in "walk mode" */
 		public bool allowWalkCursor = false;
@@ -136,6 +138,10 @@ namespace AC
 			if (showSettings)
 			{
 				cursorRendering = (CursorRendering) CustomGUILayout.EnumPopup ("Cursor rendering:", cursorRendering, "AC.KickStarter.cursorManager.cursorRendering");
+				if (cursorRendering == CursorRendering.Software)
+				{
+					lockSystemCursor = CustomGUILayout.ToggleLeft ("Lock system cursor when locking AC cursor?", lockSystemCursor, "AC.KickStarter.cursorManager.lockSystemCursor");
+				}
 				forceCursorInEditor = CustomGUILayout.ToggleLeft ("Always show system cursor in Editor?", forceCursorInEditor, "AC.KickStarter.cursorManager.forceCursorInEditor");
 			}
 			EditorGUILayout.EndVertical ();

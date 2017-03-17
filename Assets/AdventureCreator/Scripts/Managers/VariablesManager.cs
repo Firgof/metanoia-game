@@ -261,12 +261,44 @@ namespace AC
 		}
 
 
-		private void ActivateVar (GVar var)
+		/**
+		 * <summary>Selects a Variable for editing</summary>
+		 * <param name = "variableID">The ID of the Variable to select</param>
+		 * <param name = "location">The Variable's location (Global, Local)</param>
+		 */
+		public void ShowVariable (int variableID, VariableLocation location)
 		{
-			if (selectedVar != var)
+			if (location == VariableLocation.Global)
 			{
-				var.isEditing = true;
-				selectedVar = var;
+				GVar varToActivate = GetVariable (variableID);
+				if (varToActivate != null)
+				{
+					DeactivateAllVars ();
+					ActivateVar (varToActivate);
+				}
+				SetTab (0);
+			}
+			else if (location == VariableLocation.Local)
+			{
+				GVar varToActivate = LocalVariables.GetVariable (variableID);
+				if (varToActivate != null)
+				{
+					DeactivateAllVars ();
+					ActivateVar (varToActivate);
+				}
+				SetTab (1);
+			}
+		}
+
+
+		private void ActivateVar (GVar varToActivate)
+		{
+			if (varToActivate == null) return;
+
+			if (selectedVar != varToActivate)
+			{
+				varToActivate.isEditing = true;
+				selectedVar = varToActivate;
 				EditorGUIUtility.editingTextField = false;
 			}
 		}
@@ -436,12 +468,12 @@ namespace AC
 				{
 					selectedVar.popUps = PopupsGUI (selectedVar.popUps);
 					selectedVar.val = CustomGUILayout.Popup ("Initial value:", selectedVar.val, selectedVar.popUps, apiPrefix + ".val");
-					selectedVar.canTranslate = EditorGUILayout.Toggle ("Values can be translated?", selectedVar.canTranslate);
+					selectedVar.canTranslate = CustomGUILayout.Toggle ("Values can be translated?", selectedVar.canTranslate, apiPrefix + ".canTranslate");
 				}
 				else if (selectedVar.type == VariableType.String)
 				{
 					selectedVar.textVal = CustomGUILayout.TextField ("Initial value:", selectedVar.textVal, apiPrefix + ".textVal");
-					selectedVar.canTranslate = EditorGUILayout.Toggle ("Value can be translated?", selectedVar.canTranslate);
+					selectedVar.canTranslate = CustomGUILayout.Toggle ("Values can be translated?", selectedVar.canTranslate, apiPrefix + ".canTranslate");
 				}
 				else if (selectedVar.type == VariableType.Float)
 				{

@@ -286,7 +286,7 @@ namespace AC
 				AssignValues (parameters);
 			}
 
-			isPlayer = EditorGUILayout.Toggle ("Player line?",isPlayer);
+			isPlayer = EditorGUILayout.Toggle ("Player line?", isPlayer);
 			if (!isPlayer)
 			{
 				if (Application.isPlaying)

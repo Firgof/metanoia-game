@@ -84,6 +84,20 @@ namespace AC
 			id = _id;
 		}
 
+
+		/**
+		 * <summary>Gets the associated Inventory Item</summary>
+		 * <returns>The associated Inventory Item</returns>
+		 */
+		public InvItem GetLinkedInventoryItem ()
+		{
+			if (KickStarter.runtimeInventory != null)
+			{
+				return KickStarter.runtimeInventory.GetItem (linkedID);
+			}
+			return null;
+		}
+
 	}
 
 }

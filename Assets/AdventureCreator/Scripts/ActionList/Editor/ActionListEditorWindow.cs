@@ -673,7 +673,7 @@ namespace AC
 					_action.SkipActionGUI (windowData.target.actions, true);
 				}
 			}
-			
+
 			_action.isDisplayed = EditorGUI.Foldout (new Rect (10,1,20,16), _action.isDisplayed, "");
 			
 			if (GUI.Button (new Rect(273,3,16,16), " ", Resource.NodeSkin.customStyles[0]))
@@ -888,6 +888,8 @@ namespace AC
 					_action = windowData.target.actions[i];
 				}
 
+				if (_action == null) continue;
+
 				if (i == 0)
 				{
 					GUI.Label (new Rect (16, -2, 100, 20), "START", Resource.NodeSkin.label);
@@ -906,33 +908,36 @@ namespace AC
 
 				if (IsActionInView (_action))
 				{
-					GUIStyle nodeStyle = Resource.NodeSkin.GetStyle ("Window");
+					bool isProSkin = EditorGUIUtility.isProSkin;
+					GUIStyle nodeStyle = (isProSkin) ? Resource.NodeSkin.GetStyle ("Window") : Resource.NodeSkin.customStyles [19];
+
 					Color originalColor = GUI.color;
 					GUI.color = actionsManager.EnabledActions[actionsManager.GetActionTypeIndex (_action)].color;
 
 					if (_action.isRunning && Application.isPlaying)
 					{
-						nodeStyle = Resource.NodeSkin.customStyles [16];
+						// Running
+						nodeStyle = (isProSkin) ? Resource.NodeSkin.customStyles [16] : Resource.NodeSkin.customStyles [21];
+					}
+					else if (_action.isMarked ||
+							(actionChanging != null && _action.nodeRect.Contains (e.mousePosition)))
+					{
+						// Selected
+						nodeStyle = (isProSkin) ? Resource.NodeSkin.customStyles [15] : Resource.NodeSkin.customStyles [20];
 					}
 					else if (_action.isBreakPoint)
 					{
-						nodeStyle = Resource.NodeSkin.customStyles [17];
-					}
-					else if (actionChanging != null && _action.nodeRect.Contains (e.mousePosition))
-					{
-						nodeStyle = Resource.NodeSkin.customStyles [15];
-					}
-					else if (_action.isMarked)
-					{
-						nodeStyle = Resource.NodeSkin.customStyles [15];
+						//  Breakpoint
+						nodeStyle = (isProSkin) ? Resource.NodeSkin.customStyles [17] : Resource.NodeSkin.customStyles [22];
 					}
 					else if (!_action.isEnabled)
 					{
-						nodeStyle = Resource.NodeSkin.customStyles [18];
+						// Disabled
+						nodeStyle = (isProSkin) ? Resource.NodeSkin.customStyles [18] : Resource.NodeSkin.customStyles [23];
 					}
 
 					_action.AssignParentList (windowData.target);
-				
+
 					string label = i + ": " + actionsManager.EnabledActions[actionsManager.GetActionTypeIndex (_action)].GetFullTitle ();
 					if (!_action.isDisplayed)
 					{
@@ -1147,6 +1152,8 @@ namespace AC
 			{
 				actionList = windowData.target.actions;
 			}
+
+			if (actionList[i] == null) return;
 			
 			if (actionList[i].numSockets == 0)
 			{
@@ -1791,7 +1798,7 @@ namespace AC
 			int i=0;
 			foreach (Action action in actionList)
 			{
-				if (action.isMarked)
+				if (action != null && action.isMarked)
 				{
 					i++;
 				}

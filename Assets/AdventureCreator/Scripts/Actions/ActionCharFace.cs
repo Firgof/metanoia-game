@@ -119,7 +119,7 @@ namespace AC
 								}
 								else
 								{
-									Debug.Log ("Cannot look at " + faceObject.name + "'s head as their 'Neck bone' has not been defined.");
+									ACDebug.Log ("Cannot look at " + faceObject.name + "'s head as their 'Neck bone' has not been defined.");
 								}
 							}
 
@@ -207,7 +207,7 @@ namespace AC
 							}
 							else
 							{
-								Debug.Log ("Cannot look at " + faceObject.name + "'s head as their 'Neck bone' has not been defined.");
+								ACDebug.Log ("Cannot look at " + faceObject.name + "'s head as their 'Neck bone' has not been defined.");
 							}
 						}
 

@@ -27,13 +27,16 @@ namespace AC
 		}
 		
 		
-		public override void OnInspectorGUI()
+		public override void OnInspectorGUI ()
 		{
 			if (_target == null || inventoryManager == null)
 			{
 				OnEnable ();
 				return;
 			}
+
+			ShowCategoriesUI (_target);
+			EditorGUILayout.Space ();
 
 			EditorGUILayout.LabelField ("Stored Inventory items", EditorStyles.boldLabel);
 			if (_target.items.Count > 0)
@@ -61,6 +64,16 @@ namespace AC
 					}
 
 					EditorGUILayout.EndHorizontal ();
+
+					if (_target.limitToCategory && _target.categoryIDs != null && _target.categoryIDs.Count > 0)
+					{
+						InvItem listedItem = inventoryManager.GetItem (_target.items[i].linkedID);
+						if (listedItem != null && !_target.categoryIDs.Contains (listedItem.binID))
+					 	{
+							EditorGUILayout.HelpBox ("This item is not in the categories checked above and will not be displayed.", MessageType.Warning);
+						}
+					}
+
 					GUILayout.Box("", GUILayout.ExpandWidth(true), GUILayout.Height(1));
 				}
 				EditorGUILayout.EndVertical ();
@@ -84,6 +97,52 @@ namespace AC
 			EditorGUILayout.Space ();
 
 			UnityVersionHandler.CustomSetDirty (_target);
+		}
+
+
+		private void ShowCategoriesUI (Container _target)
+		{
+			EditorGUILayout.BeginVertical ("Button");
+			_target.limitToCategory = EditorGUILayout.Toggle ("Limit by category?", _target.limitToCategory);
+			if (_target.limitToCategory)
+			{
+				List<InvBin> bins = AdvGame.GetReferences ().inventoryManager.bins;
+
+				if (bins == null || bins.Count == 0)
+				{
+					_target.categoryIDs.Clear ();
+					EditorGUILayout.HelpBox ("No categories defined!", MessageType.Warning);
+				}
+				else
+				{
+					for (int i=0; i<bins.Count; i++)
+					{
+						bool include = (_target.categoryIDs.Contains (bins[i].id)) ? true : false;
+						include = EditorGUILayout.ToggleLeft (" " + i.ToString () + ": " + bins[i].label, include);
+
+						if (include)
+						{
+							if (!_target.categoryIDs.Contains (bins[i].id))
+							{
+								_target.categoryIDs.Add (bins[i].id);
+							}
+						}
+						else
+						{
+							if (_target.categoryIDs.Contains (bins[i].id))
+							{
+								_target.categoryIDs.Remove (bins[i].id);
+							}
+						}
+					}
+
+					if (_target.categoryIDs.Count == 0)
+					{
+						EditorGUILayout.HelpBox ("At least one category must be checked for this to take effect.", MessageType.Info);
+					}
+				}
+			}
+			EditorGUILayout.EndVertical ();
 		}
 
 

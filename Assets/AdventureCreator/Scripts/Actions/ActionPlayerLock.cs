@@ -31,6 +31,7 @@ namespace AC
 		public LockType doRightLock = LockType.NoChange;
 		
 		public PlayerMoveLock doRunLock = PlayerMoveLock.NoChange;
+		public LockType doJumpLock = LockType.NoChange;
 		public LockType freeAimLock = LockType.NoChange;
 		public LockType cursorState = LockType.NoChange;
 		public LockType doGravityLock = LockType.NoChange;
@@ -96,6 +97,18 @@ namespace AC
 					KickStarter.playerInput.SetRightLock (false);
 				}
 
+				if (KickStarter.settingsManager.movementMethod != MovementMethod.PointAndClick)
+				{
+					if (doJumpLock == LockType.Disabled)
+					{
+						KickStarter.playerInput.SetJumpLock (true);
+					}
+					else if (doJumpLock == LockType.Enabled)
+					{
+						KickStarter.playerInput.SetJumpLock (false);
+					}
+				}
+
 				if (IsInFirstPerson ())
 				{
 					if (freeAimLock == LockType.Disabled)
@@ -110,11 +123,11 @@ namespace AC
 
 				if (cursorState == LockType.Disabled)
 				{
-					KickStarter.playerInput.cursorIsLocked = false;
+					KickStarter.playerInput.SetInGameCursorState (false);
 				}
 				else if (cursorState == LockType.Enabled)
 				{
-					KickStarter.playerInput.cursorIsLocked = true;
+					KickStarter.playerInput.SetInGameCursorState (true);
 				}
 
 				if (doRunLock != PlayerMoveLock.NoChange)
@@ -175,6 +188,11 @@ namespace AC
 				doDownLock = (LockType) EditorGUILayout.EnumPopup ("Down movement:", doDownLock);
 				doLeftLock = (LockType) EditorGUILayout.EnumPopup ("Left movement:", doLeftLock);
 				doRightLock = (LockType) EditorGUILayout.EnumPopup ("Right movement:", doRightLock);
+			}
+
+			if (AdvGame.GetReferences () != null && AdvGame.GetReferences ().settingsManager != null && KickStarter.settingsManager.movementMethod != MovementMethod.PointAndClick)
+			{
+				doJumpLock = (LockType) EditorGUILayout.EnumPopup ("Jumping:", doJumpLock);
 			}
 
 			if (IsInFirstPerson ())

@@ -58,7 +58,7 @@ namespace PixelCrushers.DialogueSystem
             {
                 if (label != null)
                 {
-                    label.text = value;
+                    label.text = UnityUITypewriterEffect.StripRPGMakerCodes(value);
                     UITools.SendTextChangeMessage(label);
                 }
                 else

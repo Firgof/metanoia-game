@@ -46,7 +46,7 @@ namespace AC
 		public const string colon = ":";
 
 		private float gameplayInvokeTime = 0.01f;
-		private SaveData saveData;
+		private SaveData saveData = new SaveData ();
 		private SelectiveLoad activeSelectiveLoad = new SelectiveLoad ();
 
 
@@ -426,11 +426,25 @@ namespace AC
 
 		/**
 		 * <summary>Checks if a save file with a particular ID number exists</summary>
+		 * <param name = "elementSlot">The slot index of the MenuSavesList element</param>
 		 * <param name = "saveID">The save ID to check for</param>
+		 * <param name = "useSaveID">If True, the saveID overrides the elementSlot to determine which file to check for</param>
 		 * <returns>True if a save file with a matching ID number exists</returns>
 		 */
-		public static bool DoesSaveExist (int saveID)
+		public static bool DoesSaveExist (int elementSlot, int saveID, bool useSaveID)
 		{
+			if (!useSaveID)
+			{
+				if (elementSlot >= 0 && KickStarter.saveSystem.foundSaveFiles.Count > elementSlot)
+				{
+					saveID = KickStarter.saveSystem.foundSaveFiles[elementSlot].ID;
+				}
+				else
+				{
+					saveID = -1;
+				}
+			}
+
 			if (KickStarter.saveSystem)
 			{
 				foreach (SaveFile file in KickStarter.saveSystem.foundSaveFiles)
@@ -442,6 +456,17 @@ namespace AC
 				}
 			}
 			return false;
+		}
+
+
+		/**
+		 * <summary>Checks if a save file with a particular ID number exists</summary>
+		 * <param name = "saveID">The save ID to check for</param>
+		 * <returns>True if a save file with a matching ID number exists</returns>
+		 */
+		public static bool DoesSaveExist (int saveID)
+		{
+			return DoesSaveExist (0, saveID, true);
 		}
 
 
@@ -704,50 +729,38 @@ namespace AC
 
 		private int GetPlayerScene (int playerID, List<PlayerData> _playerData)
 		{
-			SettingsManager settingsManager = KickStarter.settingsManager;
-			if (settingsManager.playerSwitching == PlayerSwitching.DoNotAllow)
+			if (KickStarter.settingsManager.playerSwitching == PlayerSwitching.DoNotAllow && playerID > 0)
 			{
-				if (_playerData.Count > 0)
-				{
-					return _playerData[0].currentScene;
-				}
-			}
-			else
-			{
-				foreach (PlayerData _data in _playerData)
-				{
-					if (_data.playerID == playerID)
-					{
-						return (_data.currentScene);
-					}
-				}
+				playerID = 0;
 			}
 
+			foreach (PlayerData _data in _playerData)
+			{
+				if (_data.playerID == playerID)
+				{
+					return (_data.currentScene);
+				}
+			}
+		
 			return UnityVersionHandler.GetCurrentSceneNumber ();
 		}
 
 
 		private string GetPlayerSceneName (int playerID, List<PlayerData> _playerData)
 		{
-			SettingsManager settingsManager = KickStarter.settingsManager;
-			if (settingsManager.playerSwitching == PlayerSwitching.DoNotAllow)
+			if (KickStarter.settingsManager.playerSwitching == PlayerSwitching.DoNotAllow && playerID > 0)
 			{
-				if (_playerData.Count > 0)
+				playerID = 0;
+			}
+
+			foreach (PlayerData _data in _playerData)
+			{
+				if (_data.playerID == playerID)
 				{
-					return _playerData[0].currentSceneName;
+					return (_data.currentSceneName);
 				}
 			}
-			else
-			{
-				foreach (PlayerData _data in _playerData)
-				{
-					if (_data.playerID == playerID)
-					{
-						return (_data.currentSceneName);
-					}
-				}
-			}
-			
+
 			return UnityVersionHandler.GetCurrentSceneName ();
 		}
 
@@ -1098,7 +1111,7 @@ namespace AC
 				saveData.mainData = new MainData ();
 				saveData.playerData = new List<PlayerData>();
 			}
-			
+
 			PlayerData playerData = SavePlayerData (KickStarter.player);
 			saveData.playerData.Add (playerData);
 		}
@@ -1403,24 +1416,20 @@ namespace AC
 			{
 				PlayerData playerData = new PlayerData ();
 
-				if (KickStarter.settingsManager.playerSwitching == PlayerSwitching.DoNotAllow)
+				int playerID = saveData.mainData.currentPlayerID;
+				if (KickStarter.settingsManager.playerSwitching == PlayerSwitching.DoNotAllow && playerID > 0)
 				{
-					if (saveData.playerData.Count > 0)
-					{
-						playerData = saveData.playerData[0];
-					}
-				}
-				else
-				{
-					foreach (PlayerData _data in saveData.playerData)
-					{
-						if (_data.playerID == saveData.mainData.currentPlayerID)
-						{
-							playerData = _data;
-						}
-					}
+					playerID = 0;
 				}
 
+				foreach (PlayerData _data in saveData.playerData)
+				{
+					if (_data.playerID == saveData.mainData.currentPlayerID)
+					{
+						playerData = _data;
+					}
+				}
+			
 				if (activeSelectiveLoad.loadPlayer)
 				{
 					ReturnPlayerData (playerData, KickStarter.player);
@@ -1515,7 +1524,7 @@ namespace AC
 		 * <param name = "doSceneCheck">If True, the check will only be successful if the Player is currently within a scene</param>
 		 * <returns>True if PlayerData for the given Player exists</returns>
 		 */
-		public bool DoesPlayerDataExist (int ID, bool doSceneCheck)
+		public bool DoesPlayerDataExist (int ID, bool doSceneCheck = false)
 		{
 			if (saveData != null && saveData.playerData.Count > 0)
 			{
@@ -1582,6 +1591,44 @@ namespace AC
 			}
 			
 			return UnityVersionHandler.GetCurrentSceneName ();
+		}
+
+
+		/**
+		 * <summary>Updates a Player object with its associated saved animation data, if it exists.</summary>
+		 * <param name = "player">The Player to load animation data for</param>
+		 */
+		public void AssignPlayerAnimData (Player player)
+		{
+			if (player != null && saveData.playerData.Count > 0)
+			{
+				foreach (PlayerData _data in saveData.playerData)
+				{
+					if (player.ID == _data.playerID)
+					{
+						player.LoadPlayerData (_data, true);
+					}
+				}
+			}
+		}
+
+
+		/**
+		 * <summary>Updates a Player object with its associated saved data, if it exists.</summary>
+		 * <param name = "player">The Player to load animation data for</param>
+		 */
+		public void AssignPlayerAllData (Player player)
+		{
+			if (player != null && saveData.playerData.Count > 0)
+			{
+				foreach (PlayerData _data in saveData.playerData)
+				{
+					if (player.ID == _data.playerID)
+					{
+						player.LoadPlayerData (_data);
+					}
+				}
+			}
 		}
 
 
@@ -1939,7 +1986,7 @@ namespace AC
 
 
 		/**
-		 * <summary>Deletes a player profile.</summary>
+		 * <summary>Deletes a player profile by referencing its entry in a MenuProfilesList element.</summary>
 		 * <param name = "profileIndex">The index in the MenuProfilesList element that represents the profile to delete. If it is set to its default, -2, the active profile will be deleted</param>
 		 * <param name = "includeActive">If True, then the MenuProfilesList element that the profile was selected from also displays the active profile</param>
 		 */
@@ -1960,7 +2007,28 @@ namespace AC
 			{
 				profileID = Options.GetActiveProfileID ();
 			}
-			
+
+			DeleteProfileID (profileID);
+		}
+
+
+		/**
+		 * <summary>Deletes a player profile ID.</summary>
+		 * <param name = "profileID">The profile ID to delete</param>
+		 */
+		public void DeleteProfileID (int profileID)
+		{
+			if (!KickStarter.settingsManager.useProfiles || profileID < 0)
+			{
+				return;
+			}
+
+			if (!Options.DoesProfileIDExist (profileID))
+			{
+				ACDebug.LogWarning ("Cannot delete profile ID " + profileID + " as it does not exist!");
+				return;
+			}
+
 			// Delete save files
 			for (int i=0; i<50; i++)
 			{
@@ -1972,17 +2040,15 @@ namespace AC
 				}
 			}
 
-			bool isActive = false;
-			if (profileID == Options.GetActiveProfileID ())
-			{
-				isActive = true;
-			}
+			bool isActive = (profileID == Options.GetActiveProfileID ()) ? true : false;
 			Options.DeleteProfilePrefs (profileID);
 			if (isActive)
 			{
 				GatherSaveFiles ();
 			}
 			KickStarter.playerMenus.RecalculateAll ();
+
+			ACDebug.Log ("Profile ID " + profileID + " deleted.");
 		}
 
 

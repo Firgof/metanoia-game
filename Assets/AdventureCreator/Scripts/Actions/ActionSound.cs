@@ -204,7 +204,7 @@ namespace AC
 			}
 			else
 			{
-				soundObject = (Sound) EditorGUILayout.ObjectField ("Sound object:", soundObject, typeof(Sound), true);
+				soundObject = (Sound) EditorGUILayout.ObjectField ("Sound object:", soundObject, typeof (Sound), true);
 				
 				constantID = FieldToID <Sound> (soundObject, constantID);
 				soundObject = IDToField <Sound> (soundObject, constantID, false);

@@ -52,8 +52,8 @@ namespace AC
 		
 		override public void ShowGUI ()
 		{
-			numSockets = EditorGUILayout.IntSlider ("# of possible values:", numSockets, 0, 100);
-			numSockets = Mathf.Max (0, numSockets);
+			numSockets = EditorGUILayout.IntSlider ("# of possible values:", numSockets, 1, 100);
+			numSockets = Mathf.Max (1, numSockets);
 		}
 		
 		#endif

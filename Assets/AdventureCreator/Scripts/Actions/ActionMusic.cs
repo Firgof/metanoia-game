@@ -34,6 +34,7 @@ namespace AC
 		public bool isQueued;
 
 		public bool resumeFromStart = true;
+		public bool resumeIfPlayedBefore = false;
 
 		public enum MusicAction { Play, Stop, Crossfade, ResumeLastStopped };
 		public MusicAction musicAction;
@@ -88,11 +89,11 @@ namespace AC
 			{
 				if (musicAction == MusicAction.Play)
 				{
-					return music.Play (trackID, loop, isQueued, _time);
+					return music.Play (trackID, loop, isQueued, _time, resumeIfPlayedBefore);
 				}
 				else if (musicAction == MusicAction.Crossfade)
 				{
-					return music.Crossfade (trackID, loop, isQueued, _time);
+					return music.Crossfade (trackID, loop, isQueued, _time, resumeIfPlayedBefore);
 				}
 				else if (musicAction == MusicAction.Stop)
 				{
@@ -135,6 +136,7 @@ namespace AC
 				
 					loop = EditorGUILayout.Toggle ("Loop?", loop);
 					isQueued = EditorGUILayout.Toggle ("Queue?", isQueued);
+					resumeIfPlayedBefore = EditorGUILayout.Toggle ("Resume if played before?", resumeIfPlayedBefore);
 				}
 				else if (musicAction == MusicAction.Stop)
 				{
